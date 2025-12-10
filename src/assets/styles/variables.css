@@ -36,7 +36,7 @@
   --gradient-success: linear-gradient(135deg, var(--success-color), var(--success-dark));
   --gradient-warning: linear-gradient(135deg, var(--warning-color), var(--warning-dark));
   --gradient-danger: linear-gradient(135deg, var(--danger-color), var(--danger-dark));
-  --gradient-none: linear-gradient(180deg, rgb(250, 205, 213), rgb(252, 237, 237),rgb(250, 243, 244));
+  --gradient-none: linear-gradient(180deg, rgb(115, 209, 120), rgb(195, 250, 223),rgb(250, 243, 244));
   
   /* Typography */
   --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;

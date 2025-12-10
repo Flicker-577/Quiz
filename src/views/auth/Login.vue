@@ -1,55 +1,10 @@
 <template>
   <div class="login-container">
-    <!-- Background Animation -->
-    <div class="background-animation">
-      <div class="shape shape-1"></div>
-      <div class="shape shape-2"></div>
-      <div class="shape shape-3"></div>
-    </div>
-
     <div class="login-wrapper">
-      <!-- Left Side - Branding -->
-      <div class="brand-section">
-        <div class="brand-content">
-          <div class="logo">
-            <div class="logo-icon">
-              <svg viewBox="0 0 24 24" width="48" height="48">
-                <path fill="currentColor" d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 5.5V7H9V5.5L3 7V9L5 9.5V15.5L3 16V18L9 16.5V18H15V16.5L21 18V16L19 15.5V9.5L21 9ZM15 16H9V14H15V16ZM15 12H9V10H15V12Z"/>
-              </svg>
-            </div>
-            <h1>QuizMaster Pro</h1>
-          </div>
-          <div class="brand-text">
-            <h2>AI-Powered Quiz Management System</h2>
-            <p>Transform education with intelligent quiz generation, automated marking, and real-time analytics.</p>
-          </div>
-          <div class="features">
-            <div class="feature">
-              <svg viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-              </svg>
-              <span>AI-Generated Quizzes</span>
-            </div>
-            <div class="feature">
-              <svg viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-              </svg>
-              <span>Automated Marking</span>
-            </div>
-            <div class="feature">
-              <svg viewBox="0 0 24 24" width="20" height="20">
-                <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-              </svg>
-              <span>Real-time Analytics</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right Side - Login Form -->
       <div class="login-section">
         <div class="login-card">
           <div class="login-header">
+            <img src="/logo-no.jpg" alt="logo" class="logo-img">
             <h2>Welcome Back</h2>
             <p>Sign in to your account</p>
           </div>
@@ -59,7 +14,7 @@
               <label class="form-label">Email Address</label>
               <div class="input-group">
                 <span class="input-icon">
-                  <svg viewBox="0 0 24 24" width="18" height="18">
+                  <svg viewBox="0 0 24 24" width="20" height="20">
                     <path fill="currentColor" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
                   </svg>
                 </span>
@@ -78,7 +33,7 @@
               <label class="form-label">Password</label>
               <div class="input-group">
                 <span class="input-icon">
-                  <svg viewBox="0 0 24 24" width="18" height="18">
+                  <svg viewBox="0 0 24 24" width="20" height="20">
                     <path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM15.1 8H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
                   </svg>
                 </span>
@@ -93,7 +48,6 @@
               </div>
             </div>
 
-            <!-- Remember Me Checkbox -->
             <div class="form-options">
               <label class="checkbox-label">
                 <input 
@@ -167,24 +121,14 @@ export default {
       error.value = ''
       
       try {
-        console.log('🔐 Login with remember:', form.value.remember)
-        
-        // Call the login action from your store
         await authStore.login(form.value)
         
-        console.log('✅ Login successful, user:', authStore.user)
-        
-        // Check if user data is properly loaded
         if (!authStore.user) {
           throw new Error('User data not loaded after login')
         }
 
-        // Get user role from store
         const userRole = authStore.user.role
         
-        console.log('👤 User role:', userRole)
-        
-        // Define redirect paths based on role
         const redirectPaths = {
           admin: '/admin/dashboard',
           lecturer: '/lecturer/dashboard',
@@ -195,17 +139,13 @@ export default {
         const redirectPath = redirectPaths[userRole]
         
         if (redirectPath) {
-          console.log('🔄 Redirecting to:', redirectPath)
-          // Let the global loader handle the page transition
           await router.replace(redirectPath)
         } else {
           error.value = `No dashboard available for role: ${userRole}`
-          console.error('Unknown user role:', userRole)
           await authStore.logout()
         }
         
       } catch (err) {
-        console.error('❌ Login error:', err)
         error.value = authStore.error || 'Login failed. Please try again.'
       } finally {
         loading.value = false
@@ -224,132 +164,39 @@ export default {
 
 <style scoped>
 .login-container {
-  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--gradient-none);
+  background: var(--gradient-none); 
   position: relative;
-  overflow: hidden;
+  min-height: 100vh; /* Ensures full height centering */
   font-family: var(--font-family);
-}
-
-.background-animation {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-}
-
-.shape {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.shape-1 {
-  width: 300px;
-  height: 300px;
-  top: -150px;
-  right: -150px;
-}
-
-.shape-2 {
-  width: 200px;
-  height: 200px;
-  bottom: -100px;
-  left: -100px;
-}
-
-.shape-3 {
-  width: 150px;
-  height: 150px;
-  top: 50%;
-  right: 20%;
+  padding: 20px;
 }
 
 .login-wrapper {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  max-width: 1200px;
+  max-width: 440px; /* Slightly wider for better breathing room */
   width: 100%;
   background: white;
   border-radius: var(--border-radius-xl);
-  box-shadow: var(--shadow-lg);
+  /* Modern, softer shadow */
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
   overflow: hidden;
   margin: 20px;
-  z-index: 2;
-  position: relative;
 }
 
-.brand-section {
-  background: var(--gradient-primary);
-  color: white;
-  padding: 60px 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.brand-content {
-  text-align: center;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-md);
-  margin-bottom: 40px;
-}
-
-.logo-icon {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 15px;
-  border-radius: var(--border-radius-lg);
-  backdrop-filter: blur(10px);
-}
-
-.logo h1 {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  margin: 0;
-}
-
-.brand-text h2 {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  margin-bottom: 15px;
-}
-
-.brand-text p {
-  font-size: var(--font-size-base);
-  opacity: 0.9;
-  line-height: 1.6;
-  margin-bottom: 40px;
-}
-
-.features {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.feature {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: var(--font-size-base);
-}
-
-.feature svg {
-  color: var(--success-color);
+.logo-img {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  /* Using a box shadow instead of double border looks cleaner */
+  box-shadow: 0 0 0 4px var(--primary-soft);
+  object-fit: cover;
+  margin-bottom: 10px;
 }
 
 .login-section {
-  padding: 60px 40px;
+  padding: 50px 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -357,28 +204,28 @@ export default {
 
 .login-card {
   width: 100%;
-  max-width: 400px;
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 35px;
 }
 
 .login-header h2 {
-  font-size: var(--font-size-2xl);
+  font-size: 1.75rem;
   font-weight: 700;
-  color: var(--dark-color);
+  color: var(--primary-dark);
   margin-bottom: 8px;
+  letter-spacing: -0.5px;
 }
 
 .login-header p {
   color: var(--gray-color);
-  font-size: var(--font-size-base);
+  font-size: 0.95rem;
 }
 
 .login-form {
-  margin-bottom: 30px;
+  margin-bottom: 25px;
 }
 
 .form-group {
@@ -389,46 +236,59 @@ export default {
   display: block;
   margin-bottom: 8px;
   color: var(--dark-color);
-  font-weight: 500;
-  font-size: var(--font-size-sm);
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-left: 2px;
 }
 
 .input-group {
   position: relative;
   display: flex;
   align-items: center;
+  transition: all 0.3s ease;
 }
 
 .input-icon {
   position: absolute;
   left: 16px;
-  color: var(--gray-color);
+  color: #94a3b8; /* Lighter gray initially */
   z-index: 2;
+  transition: color 0.3s ease;
+}
+
+/* Magic: Highlight icon when input is focused */
+.input-group:focus-within .input-icon {
+  color: var(--primary-color);
 }
 
 .form-control {
   width: 100%;
-  padding: 16px 16px 16px 48px;
-  border: 2px solid var(--gray-light);
+  padding: 14px 16px 14px 48px; /* Balanced padding */
+  border: 1.5px solid #e2e8f0; /* Subtle border */
   border-radius: var(--border-radius-lg);
-  font-size: var(--font-size-base);
-  transition: all 0.3s ease;
-  background: white;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  background: #fff;
+  color: var(--dark-color);
 }
 
 .form-control:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px var(--primary-soft);
+  box-shadow: 0 0 0 4px var(--primary-soft); /* Soft ring effect */
+}
+
+.form-control::placeholder {
+  color: #cbd5e1;
 }
 
 .login-btn {
   width: 100%;
-  padding: 16px;
-  font-size: var(--font-size-base);
+  padding: 14px;
+  font-size: 1rem;
   font-weight: 600;
   border-radius: var(--border-radius-lg);
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   border: none;
   cursor: pointer;
   position: relative;
@@ -438,18 +298,25 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 52px;
+  min-height: 50px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .login-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.login-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .login-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.7;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
+  background: var(--gray-color);
 }
 
 .login-btn.loading {
@@ -461,58 +328,38 @@ export default {
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.btn-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .alert {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 16px;
-  border-radius: var(--border-radius-lg);
-  font-size: var(--font-size-sm);
-  margin-top: 16px;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--border-radius-md);
+  font-size: 0.9rem;
+  margin-top: 20px;
 }
 
 .alert-error {
-  background: var(--danger-soft);
-  color: var(--danger-dark);
-  border: 1px solid var(--danger-light);
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
 }
 
-.text-center {
-  text-align: center;
-}
-.mt-3 {
-  margin-top: var(--spacing-lg);
-}
-.text-sm {
-  font-size: var(--font-size-sm);
-}
-.font-medium {
-  font-weight: 500;
-}
-.text-primary-dark {
-  color: var(--primary-dark);
-  text-decoration: none;
-}
-.text-primary-dark:hover {
-  text-decoration: underline;
-}
+.text-center { text-align: center; }
+.mt-3 { margin-top: 20px; }
+.text-sm { font-size: 0.9rem; color: var(--gray-color); }
+.font-medium { font-weight: 600; }
+.text-primary-dark { color: var(--primary-dark); text-decoration: none; transition: color 0.2s; }
+.text-primary-dark:hover { color: var(--primary-color); text-decoration: underline; }
 
 .form-options {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .checkbox-label {
@@ -520,9 +367,14 @@ export default {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  font-size: var(--font-size-sm);
-  color: var(--dark-color);
+  font-size: 0.9rem;
+  color: var(--gray-color);
   user-select: none;
+  transition: color 0.2s;
+}
+
+.checkbox-label:hover {
+  color: var(--dark-color);
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -532,10 +384,10 @@ export default {
 .checkmark {
   width: 18px;
   height: 18px;
-  border: 2px solid var(--gray-light);
+  border: 1.5px solid #cbd5e1;
   border-radius: 4px;
   position: relative;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   background: white;
 }
 
@@ -548,48 +400,17 @@ export default {
   content: '';
   position: absolute;
   left: 5px;
-  top: 2px;
+  top: 1px;
   width: 4px;
-  height: 8px;
+  height: 9px;
   border: solid white;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
 
-.checkbox-label input[type="checkbox"]:disabled + .checkmark {
-  background-color: var(--gray-light);
-  border-color: var(--gray-light);
-  cursor: not-allowed;
-}
-
-@media (max-width: 768px) {
-  .login-wrapper {
-    grid-template-columns: 1fr;
-    margin: 10px;
-  }
-
-  .brand-section {
-    padding: 40px 20px;
-    display: none;
-  }
-
-  .login-section {
-    padding: 40px 20px;
-  }
-
-  .logo {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .logo h1 {
-    font-size: var(--font-size-2xl);
-  }
-}
-
 @media (max-width: 480px) {
-  .login-header h2 {
-    font-size: var(--font-size-xl);
-  }
+  .login-section { padding: 30px 20px; }
+  .login-wrapper { margin: 10px; box-shadow: none; border: 1px solid #f1f5f9; }
+  .login-container { background: white; align-items: flex-start; }
 }
 </style>

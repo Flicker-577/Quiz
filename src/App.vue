@@ -14,7 +14,7 @@
 </template>
 
 <script>
-import AppLoader from '@/components/reusable/AppLoader.vue'
+import AppLoader from '@/components/reusable/GlobalLoader.vue'
 
 export default {
   name: 'App',
