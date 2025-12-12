@@ -8,20 +8,28 @@
       </div>
       <div class="header-actions">
         <AppButton variant="outline" @click="fetchDashboardData" :disabled="loading">
-          Refresh
+          <span v-if="loading" class="btn-loading-content">
+             <AppSpinner size="sm" color="dark" /> Refreshing...
+          </span>
+          <span v-else>Refresh</span>
         </AppButton>
       </div>
     </div>
 
-    <div class="stats-row">
+    <div v-if="loading" class="stats-row">
+      <div v-for="n in 4" :key="n" class="skeleton-stat-card">
+         <AppSkeleton type="card" height="100%" borderRadius="12px" />
+      </div>
+    </div>
+
+    <div v-else class="stats-row">
       <div class="stat-card">
         <div class="stat-icon success">
           <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
         </div>
         <div class="stat-info">
           <span class="label">Active Quizzes</span>
-          <span v-if="!loading" class="value">{{ stats.active_quizzes }}</span>
-          <AppSkeleton v-else width="40px" height="28px" />
+          <span class="value">{{ stats.active_quizzes }}</span>
           <span class="sub-text">Published</span>
         </div>
       </div>
@@ -32,8 +40,7 @@
         </div>
         <div class="stat-info">
           <span class="label">Draft Quizzes</span>
-          <span v-if="!loading" class="value">{{ stats.draft_quizzes }}</span>
-          <AppSkeleton v-else width="40px" height="28px" />
+          <span class="value">{{ stats.draft_quizzes }}</span>
           <span class="sub-text">Unpublished</span>
         </div>
       </div>
@@ -44,8 +51,7 @@
         </div>
         <div class="stat-info">
           <span class="label">Performed</span>
-          <span v-if="!loading" class="value">{{ stats.total_attempts }}</span>
-          <AppSkeleton v-else width="40px" height="28px" />
+          <span class="value">{{ stats.total_attempts }}</span>
           <span class="sub-text">Student Attempts</span>
         </div>
       </div>
@@ -56,16 +62,21 @@
         </div>
         <div class="stat-info">
           <span class="label">Modules</span>
-          <span v-if="!loading" class="value">{{ stats.total_modules }}</span>
-          <AppSkeleton v-else width="40px" height="28px" />
+          <span class="value">{{ stats.total_modules }}</span>
           <span class="sub-text">Assigned</span>
         </div>
       </div>
     </div>
 
     <h2 class="section-title">Quick Actions</h2>
-    <div class="actions-grid">
-      
+    
+    <div v-if="loading" class="actions-grid">
+       <div v-for="n in 2" :key="n" class="skeleton-action-card">
+          <AppSkeleton width="100%" height="120px" borderRadius="12px" />
+       </div>
+    </div>
+
+    <div v-else class="actions-grid">
       <div class="action-card" @click="$router.push('/lecturer/quizzes')">
         <div class="action-icon primary">
           <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
@@ -91,7 +102,6 @@
           <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </div>
       </div>
-
     </div>
 
     <div class="grid-2">
@@ -103,7 +113,7 @@
           </div>
           
           <div v-if="loading" class="skeleton-list">
-             <AppSkeleton v-for="n in 3" :key="n" width="100%" height="50px" class="mb-2" />
+             <AppSkeleton v-for="n in 3" :key="n" width="100%" height="60px" class="mb-2" borderRadius="8px" />
           </div>
 
           <ul v-else class="action-list">
@@ -126,14 +136,18 @@
       
       <div class="widget-column">
         <div class="content-card">
-          <h3 class="card-title">Student Distribution</h3>
-          <p class="card-subtitle">Enrollment by Year of Study</p>
+          <div class="card-header-row">
+             <div>
+                <h3 class="card-title">Student Distribution</h3>
+                <p class="card-subtitle mb-0">Enrollment by Year of Study</p>
+             </div>
+          </div>
           
-          <div v-if="loading" class="skeleton-list">
-             <AppSkeleton v-for="n in 3" :key="n" width="100%" height="40px" class="mb-2" />
+          <div v-if="loading" class="skeleton-list mt-3">
+             <AppSkeleton v-for="n in 3" :key="n" width="100%" height="50px" class="mb-2" borderRadius="8px" />
           </div>
 
-          <ul v-else class="activity-list">
+          <ul v-else class="activity-list mt-2">
              <li v-for="(count, year) in moduleDistribution" :key="year" class="distribution-item">
                 <div class="dist-label">
                   <span class="year-badge">{{ formatYear(year) }}</span>
@@ -155,11 +169,12 @@
 import { ref, onMounted } from 'vue'
 import AppButton from '../../components/reusable/AppButton.vue'
 import AppSkeleton from '../../components/reusable/AppSkeleton.vue'
+import AppSpinner from '../../components/reusable/AppSpinner.vue'
 import api from '@/api/api' 
 
 export default {
   name: 'LecturerDashboard',
-  components: { AppButton, AppSkeleton },
+  components: { AppButton, AppSkeleton, AppSpinner },
   setup() {
     const loading = ref(true)
     const stats = ref({
@@ -184,7 +199,8 @@ export default {
       } catch (error) {
         console.error('Failed to load dashboard:', error)
       } finally {
-        loading.value = false
+        // Delay for smoother transition
+        setTimeout(() => { loading.value = false }, 500)
       }
     }
 
@@ -243,7 +259,21 @@ export default {
 .stat-info .value { font-size: 1.75rem; font-weight: 700; color: var(--dark-color); line-height: 1.2; }
 .sub-text { font-size: 0.8rem; color: var(--gray-color); margin-top: 2px; }
 
-/* NEW: Quick Actions */
+/* NEW SKELETON STYLES */
+.skeleton-stat-card {
+  height: 100px;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+.skeleton-action-card {
+  height: 120px;
+  overflow: hidden;
+  border-radius: var(--border-radius-lg);
+}
+.btn-loading-content { display: flex; align-items: center; gap: 8px; }
+
+/* Quick Actions */
 .section-title { font-size: 1.25rem; font-weight: 600; color: var(--dark-color); margin-bottom: var(--spacing-md); }
 
 .actions-grid {
@@ -298,7 +328,10 @@ export default {
 .dist-text { font-weight: 500; color: var(--dark-color); }
 .dist-count { font-weight: 700; font-size: 1.1rem; color: var(--dark-color); }
 .empty-state { text-align: center; padding: 2rem; color: var(--gray-color); font-style: italic; }
+.mb-0 { margin-bottom: 0 !important; }
 .mb-2 { margin-bottom: 0.5rem; }
+.mt-3 { margin-top: 1rem; }
+.mt-2 { margin-top: 0.5rem; }
 
 @media (max-width: 768px) {
   .page-header { flex-direction: column; gap: 10px; }

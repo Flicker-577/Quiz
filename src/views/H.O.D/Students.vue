@@ -13,23 +13,15 @@
       </div>
 
       <div class="stats-row">
-        <div v-for="n in 4" :key="n" class="stat-card">
-          <AppSkeleton type="circle" width="48px" height="48px" />
-          <div class="stat-info flex-grow-1 ml-3">
-            <AppSkeleton width="60%" height="12px" class="mb-2" />
-            <AppSkeleton width="40%" height="24px" />
-          </div>
+        <div v-for="n in 3" :key="n" class="skeleton-stat-card">
+          <AppSkeleton type="card" height="100%" borderRadius="12px" />
         </div>
       </div>
 
       <div class="content-card">
-        <div class="tabs-header mb-4">
-          <AppSkeleton v-for="n in 4" :key="n" width="100px" height="30px" class="mr-3" />
-        </div>
-
-        <div class="toolbar mb-4">
-          <AppSkeleton width="100%" height="42px" style="max-width: 350px" />
-          <AppSkeleton width="200px" height="42px" />
+        <div class="toolbar-skeleton">
+          <AppSkeleton width="350px" height="42px" borderRadius="8px" />
+          <AppSkeleton width="200px" height="42px" borderRadius="8px" />
         </div>
 
         <div class="skeleton-table">
@@ -69,10 +61,13 @@
         </div>
         <div class="header-actions">
           <AppButton variant="outline" @click="exportData" :disabled="isExporting">
-            <span class="icon-wrapper">
-              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span v-if="isExporting" class="btn-loading-content">
+               <AppSpinner size="sm" color="dark" /> Exporting...
             </span>
-            {{ isExporting ? 'Exporting...' : 'Export CSV' }}
+            <span v-else class="icon-wrapper">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Export CSV
+            </span>
           </AppButton>
           
           <AppButton 
@@ -270,8 +265,13 @@
         </div>
         
         <div class="modal-actions centered mt-4">
-           <AppButton variant="outline" type="button" @click="closeEditModal">Cancel</AppButton>
-           <AppButton variant="primary" type="submit" :loading="isSaving">Save Changes</AppButton>
+           <AppButton variant="outline" type="button" @click="closeEditModal" :disabled="isSaving">Cancel</AppButton>
+           <AppButton variant="primary" type="submit" :disabled="isSaving">
+              <span v-if="isSaving" class="btn-loading-content">
+                <AppSpinner size="sm" color="light" /> Saving...
+              </span>
+              <span v-else>Save Changes</span>
+           </AppButton>
         </div>
       </form>
     </AppModal>
@@ -318,12 +318,13 @@ import AppTable from '../../components/reusable/AppTable.vue'
 import AppButton from '../../components/reusable/AppButton.vue'
 import AppModal from '../../components/reusable/AppModal.vue'
 import AppSkeleton from '../../components/reusable/AppSkeleton.vue'
+import AppSpinner from '../../components/reusable/AppSpinner.vue'
 import AppSuccessModal from '../../components/reusable/AppSuccessModal.vue'
 import api from '@/api/api'
 
 export default {
   name: 'StudentManagement',
-  components: { AppTable, AppButton, AppModal, AppSkeleton, AppSuccessModal },
+  components: { AppTable, AppButton, AppModal, AppSkeleton, AppSpinner, AppSuccessModal },
   setup() {
     // --- State ---
     const students = ref([])
@@ -385,6 +386,7 @@ export default {
        } catch (e) {
           console.error(e)
        } finally {
+          // UPDATED: Added delay for smoother transition
           setTimeout(() => { isLoading.value = false }, 500)
        }
     }
@@ -524,6 +526,32 @@ export default {
 .count-badge.warning { background: var(--warning-color); color: white; }
 .count-badge.light { background: var(--gray-light); color: var(--dark-color); }
 
+/* NEW SKELETON STYLES */
+.skeleton-stat-card {
+  height: 100px;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+.toolbar-skeleton {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.skeleton-table { border: 1px solid var(--gray-light); border-radius: 8px; overflow: hidden; }
+.skeleton-header { background: #f8fafc; border-bottom: 2px solid var(--gray-light); padding: 0; }
+.skeleton-row { padding: 1rem; border-bottom: 1px solid var(--gray-light); background: white; }
+.skeleton-row:last-child { border-bottom: none; }
+.d-flex { display: flex; }
+.align-items-center { align-items: center; }
+.w-100 { width: 100%; }
+.gap-3 { gap: 1rem; }
+.mb-1 { margin-bottom: 0.25rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 1rem; }
+
+.btn-loading-content { display: flex; align-items: center; gap: 8px; }
+
 /* Toolbar */
 .toolbar { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
 .search-box { position: relative; flex: 1; min-width: 250px; }
@@ -565,16 +593,6 @@ export default {
 .alert-warning { background: #fff7ed; color: #9a3412; padding: 10px; border-radius: 4px; margin-top: 10px; font-size: 0.85rem; border: 1px solid #fdba74; }
 .modal-actions { display: flex; gap: 10px; margin-top: 1.5rem; }
 .modal-actions.centered { justify-content: flex-end; }
-
-/* Skeleton Specific */
-.skeleton-wrapper { width: 100%; animation: fade-in 0.3s ease; }
-.skeleton-table { border: 1px solid var(--gray-light); border-radius: 8px; overflow: hidden; }
-.skeleton-header { background: #f8fafc; border-bottom: 2px solid var(--gray-light); padding: 0; }
-.skeleton-row { padding: 1rem; border-bottom: 1px solid var(--gray-light); background: white; }
-.skeleton-row:last-child { border-bottom: none; }
-.gap-3 { gap: 1rem; }
-.ml-3 { margin-left: 1rem; }
-.mr-3 { margin-right: 1rem; }
 
 /* Responsiveness */
 @media (max-width: 768px) {

@@ -34,10 +34,10 @@ defineEmits(['navigate']);
 
 .palette-grid {
   display: grid;
-  /* Auto-fill grid: creates as many columns as fit, min 40px wide */
-  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
   gap: 8px;
-  padding: 4px;
+  padding: 3px;
+  align-items: center;
 }
 
 .palette-button {
@@ -46,7 +46,7 @@ defineEmits(['navigate']);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 50%;
   border: 1px solid #e5e7eb;
   cursor: pointer;
   font-weight: 600;
@@ -58,22 +58,23 @@ defineEmits(['navigate']);
 
 .palette-button:hover {
   border-color: #d1d5db;
-  background: #f9fafb;
+  background: var(--primary-light);
 }
 
 /* Answered state */
 .palette-button.is-answered {
   background: #eef2ff;
   border-color: #c7d2fe;
-  color: #4f46e5;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
 }
 
 /* Current question */
 .palette-button.is-current {
-  background: #4f46e5;
-  border-color: #4338ca;
+  background: var(--primary-color);
+  border-color: var(--primary-color);
   color: white;
-  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 2px 4px rgba(70, 229, 118, 0.3);
   transform: scale(1.05);
 }
 </style>

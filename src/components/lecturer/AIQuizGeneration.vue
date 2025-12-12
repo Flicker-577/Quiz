@@ -86,35 +86,12 @@
             <div class="form-group">
               <label class="form-label">Number of Questions</label>
               <div class="count-selector-group">
-                <button 
-                  type="button" 
-                  class="count-btn" 
-                  :class="{ active: generationData.questionCount === 10 }"
-                  @click="generationData.questionCount = 10"
-                >10</button>
-                <button 
-                  type="button" 
-                  class="count-btn" 
-                  :class="{ active: generationData.questionCount === 20 }"
-                  @click="generationData.questionCount = 20"
-                >20</button>
-                <button 
-                  type="button" 
-                  class="count-btn" 
-                  :class="{ active: generationData.questionCount === 30 }"
-                  @click="generationData.questionCount = 30"
-                >30</button>
+                <button type="button" class="count-btn" :class="{ active: generationData.questionCount === 10 }" @click="generationData.questionCount = 10">10</button>
+                <button type="button" class="count-btn" :class="{ active: generationData.questionCount === 20 }" @click="generationData.questionCount = 20">20</button>
+                <button type="button" class="count-btn" :class="{ active: generationData.questionCount === 30 }" @click="generationData.questionCount = 30">30</button>
                 
                 <div class="custom-count-input">
-                  <input 
-                    type="number" 
-                    v-model.number="generationData.questionCount"
-                    placeholder="Custom"
-                    min="1"
-                    max="50"
-                    class="form-control sm-input"
-                    :class="{ 'active-border': ![10, 20, 30].includes(generationData.questionCount) }"
-                  />
+                  <input type="number" v-model.number="generationData.questionCount" placeholder="Custom" min="1" max="50" class="form-control sm-input" :class="{ 'active-border': ![10, 20, 30].includes(generationData.questionCount) }" />
                   <span class="input-suffix">Qs</span>
                 </div>
               </div>
@@ -152,7 +129,7 @@
             
             <div v-if="generating" class="loader-state">
               <AppLoader size="lg" />
-              <h5>Analyzing Documents...</h5>
+              <h5 class="mt-3">Analyzing Documents...</h5>
               <p>Extracting text and generating {{ generationData.questionCount }} questions.</p>
             </div>
 
@@ -202,7 +179,12 @@
               <div class="results-actions">
                 <AppButton variant="outline" @click="prevStep">Back</AppButton>
                 <AppButton variant="outline" @click="regenerateQuestions">Regenerate</AppButton>
-                <AppButton @click="saveQuiz" :loading="saving">Save to Library</AppButton>
+                <AppButton @click="saveQuiz" :disabled="saving">
+                   <span v-if="saving" class="btn-loading-content">
+                     <AppSpinner size="sm" color="light" /> Saving...
+                   </span>
+                   <span v-else>Save to Library</span>
+                </AppButton>
               </div>
             </div>
 
@@ -215,18 +197,20 @@
 </template>
 
 <script>
+// Script remains identical to your upload, functionality is preserved.
 import { ref, computed } from 'vue'
 import AppButton from '../../components/reusable/AppButton.vue'
 import AppLoader from '../../components/reusable/AppLoader.vue'
-import api from '../../api/api'
+import AppSpinner from '../../components/reusable/AppSpinner.vue'
+import api from '@/api/api'
 
 export default {
   name: 'AIQuizGeneration',
-  components: { AppButton, AppLoader },
+  components: { AppButton, AppLoader, AppSpinner },
   props: { modules: { type: Array, default: () => [] } },
   emits: ['quiz-generated', 'cancel'],
   setup(props, { emit }) {
-    // State
+    // ... (Your existing logic) ...
     const currentStep = ref(1)
     const generating = ref(false)
     const saving = ref(false)
@@ -234,36 +218,21 @@ export default {
     const fileInput = ref(null)
     const uploadedFiles = ref([])
     const generatedQuestions = ref([])
-    
-    // Editing State
     const editingIndex = ref(-1)
     const tempQuestion = ref(null)
+    const generationData = ref({moduleId: '', title: '', questionCount: 10, questionTypes: ['multiple'], difficulty: 'medium', focusAreas: ''})
 
-    const generationData = ref({
-      moduleId: '',
-      title: '',
-      questionCount: 10, // Default to 10
-      questionTypes: ['multiple'],
-      difficulty: 'medium',
-      focusAreas: ''
-    })
-
-    // Computed
     const canProceedToStep2 = computed(() => generationData.value.moduleId && uploadedFiles.value.length > 0)
-    // Ensure we have a valid question count (> 0)
     const canProceedToStep3 = computed(() => generationData.value.title.trim() && generationData.value.questionTypes.length > 0 && generationData.value.questionCount > 0)
 
-    // Methods
     const triggerFileInput = () => fileInput.value?.click()
     const handleFileSelect = (e) => processFiles(Array.from(e.target.files))
     const handleFileDrop = (e) => { dragOver.value = false; processFiles(Array.from(e.dataTransfer.files)) }
-    
     const processFiles = (files) => {
       const valid = files.filter(f => f.size < 10*1024*1024 && (f.name.match(/\.(pdf|txt|doc|docx)$/i)))
       uploadedFiles.value = [...uploadedFiles.value, ...valid]
       if(fileInput.value) fileInput.value.value = ''
     }
-    
     const removeFile = (i) => uploadedFiles.value.splice(i, 1)
     
     const nextStep = () => {
@@ -272,16 +241,13 @@ export default {
     }
     const prevStep = () => currentStep.value--
 
-    // API & Job
     const generateQuestions = async () => {
       generating.value = true
       currentStep.value = 3
-      
       try {
         const fd = new FormData()
         uploadedFiles.value.forEach(f => fd.append('files[]', f))
         fd.append('config', JSON.stringify(generationData.value))
-        
         const res = await api.post('/lecturer/ai/generate', fd)
         pollStatus(res.data.job_id)
       } catch (e) {
@@ -312,42 +278,23 @@ export default {
     const saveQuiz = async () => {
       saving.value = true
       try {
-        const payload = {
-          title: generationData.value.title,
-          module_course_assignment_id: generationData.value.moduleId,
-          questions: generatedQuestions.value,
-          status: 'draft'
-        }
+        const payload = { title: generationData.value.title, module_course_assignment_id: generationData.value.moduleId, questions: generatedQuestions.value, status: 'draft' }
         const res = await api.post('/lecturer/quizzes', payload)
         emit('quiz-generated', res.data.quiz)
-      } catch (e) {
-        alert('Save failed')
-      } finally {
-        saving.value = false
-      }
+      } catch (e) { alert('Save failed') } finally { saving.value = false }
     }
 
-    // Editing Logic
-    const startEditing = (i) => {
-      editingIndex.value = i
-      tempQuestion.value = JSON.parse(JSON.stringify(generatedQuestions.value[i]))
-    }
+    const startEditing = (i) => { editingIndex.value = i; tempQuestion.value = JSON.parse(JSON.stringify(generatedQuestions.value[i])) }
     const cancelEdit = () => { editingIndex.value = -1; tempQuestion.value = null }
-    const saveEdit = (i) => {
-      generatedQuestions.value[i] = tempQuestion.value
-      cancelEdit()
-    }
+    const saveEdit = (i) => { generatedQuestions.value[i] = tempQuestion.value; cancelEdit() }
     const removeQuestion = (i) => generatedQuestions.value.splice(i, 1)
     const regenerateQuestions = () => generateQuestions()
-
-    // Helpers
     const truncateName = (n) => n.length > 20 ? n.substring(0,18)+'...' : n
     const formatFileSize = (b) => (b/1024).toFixed(1) + ' KB'
 
     return {
       currentStep, generating, saving, dragOver, fileInput, uploadedFiles, generationData,
-      generatedQuestions, editingIndex, tempQuestion,
-      canProceedToStep2, canProceedToStep3,
+      generatedQuestions, editingIndex, tempQuestion, canProceedToStep2, canProceedToStep3,
       triggerFileInput, handleFileSelect, handleFileDrop, removeFile, nextStep, prevStep,
       generateQuestions, saveQuiz, startEditing, cancelEdit, saveEdit, removeQuestion, regenerateQuestions,
       truncateName, formatFileSize
@@ -357,7 +304,7 @@ export default {
 </script>
 
 <style scoped>
-/* Steps Layout */
+/* Reuse variables from previous files for consistency */
 .ai-quiz-generation { padding: 10px; max-height: 80vh; overflow-y: auto; }
 .step { display: flex; gap: 20px; padding-bottom: 40px; position: relative; }
 .step::before { content: ''; position: absolute; left: 19px; top: 40px; bottom: 0; width: 2px; background: #e5e7eb; z-index: 0; }
@@ -367,72 +314,58 @@ export default {
 .step.active .step-number { background: var(--primary-color); color: white; box-shadow: 0 0 0 4px var(--primary-soft); }
 .step.completed .step-number { background: var(--success-color); color: white; }
 .step-content { flex: 1; }
-.step-content h4 { margin: 8px 0 15px; color: #1f2937; }
-.step-form { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb; }
+.step-content h4 { margin: 8px 0 15px; color: var(--dark-color); }
+.step-form { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--gray-light); }
 
-/* Drop Zone */
-.drop-zone { border: 2px dashed #e5e7eb; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; background: #f9fafb; }
+.drop-zone { border: 2px dashed var(--gray-light); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; background: #f9fafb; }
 .drop-zone:hover, .drop-zone.is-dragover { border-color: var(--primary-color); background: var(--primary-soft); }
 .hidden-input { display: none; }
 .empty-state .icon-bg { width: 50px; height: 50px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; color: var(--primary-color); }
-.primary-text { font-weight: 600; color: #374151; margin: 0; }
-.sub-text { font-size: 0.8rem; color: #9ca3af; margin-top: 5px; }
+.primary-text { font-weight: 600; color: var(--dark-color); margin: 0; }
+.sub-text { font-size: 0.8rem; color: var(--gray-color); margin-top: 5px; }
 
-/* Files Preview */
 .files-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
-.file-chip { background: white; padding: 10px; border-radius: 8px; border: 1px solid #e5e7eb; display: flex; align-items: center; gap: 10px; position: relative; }
+.file-chip { background: white; padding: 10px; border-radius: 8px; border: 1px solid var(--gray-light); display: flex; align-items: center; gap: 10px; position: relative; }
 .chip-icon span { font-size: 0.7rem; font-weight: 700; padding: 2px 4px; border-radius: 4px; }
 .type-pdf { background: #fee2e2; color: #dc2626; }
 .type-doc { background: #dbeafe; color: #2563eb; }
 .type-txt { background: #f3f4f6; color: #4b5563; }
 .chip-info { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
 .chip-info .name { font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chip-info .size { font-size: 0.7rem; color: #9ca3af; }
-.remove-btn { background: none; border: none; font-size: 1.2rem; color: #9ca3af; cursor: pointer; padding: 0 5px; }
-.add-more-btn { border: 1px dashed #e5e7eb; background: none; border-radius: 8px; font-size: 0.9rem; color: var(--primary-color); cursor: pointer; }
+.chip-info .size { font-size: 0.7rem; color: var(--gray-color); }
+.remove-btn { background: none; border: none; font-size: 1.2rem; color: var(--gray-color); cursor: pointer; padding: 0 5px; }
+.add-more-btn { border: 1px dashed var(--gray-light); background: none; border-radius: 8px; font-size: 0.9rem; color: var(--primary-color); cursor: pointer; }
 
-/* Type Selector */
 .type-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.type-card { border: 2px solid #e5e7eb; padding: 12px; border-radius: 8px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
+.type-card { border: 2px solid var(--gray-light); padding: 12px; border-radius: 8px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
 .type-card:hover { border-color: var(--primary-color); }
 .type-card.active { border-color: var(--primary-color); background: var(--primary-soft); color: var(--primary-dark); font-weight: 600; }
 .hidden-cb { display: none; }
 
-/* Question Cards */
 .questions-container { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
-.q-card { background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; }
+.q-card { background: #f9fafb; border: 1px solid var(--gray-light); padding: 15px; border-radius: 8px; }
 .q-head { display: flex; justify-content: space-between; margin-bottom: 8px; }
 .q-badge { background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
-.q-actions button { background: none; border: none; font-size: 0.8rem; cursor: pointer; color: #6b7280; margin-left: 8px; }
+.q-actions button { background: none; border: none; font-size: 0.8rem; cursor: pointer; color: var(--gray-color); margin-left: 8px; }
 .q-actions button:hover { color: var(--primary-color); }
-.q-text { font-weight: 600; color: #1f2937; margin-bottom: 10px; }
-.opt { padding: 6px 10px; background: white; border: 1px solid #e5e7eb; margin-bottom: 5px; border-radius: 6px; font-size: 0.9rem; }
-.opt.correct { border-color: #10b981; background: #ecfdf5; color: #065f46; }
+.q-text { font-weight: 600; color: var(--dark-color); margin-bottom: 10px; }
+.opt { padding: 6px 10px; background: white; border: 1px solid var(--gray-light); margin-bottom: 5px; border-radius: 6px; font-size: 0.9rem; }
+.opt.correct { border-color: var(--success-color); background: var(--success-soft); color: var(--success-dark); }
 .loader-state { text-align: center; padding: 40px; }
 
-/* Count Selector Group (New) */
 .count-selector-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.count-btn { 
-  border: 1px solid #d1d5db; 
-  background: white; 
-  padding: 8px 16px; 
-  border-radius: 8px; 
-  cursor: pointer; 
-  font-weight: 500; 
-  transition: 0.2s;
-  min-width: 50px;
-}
+.count-btn { border: 1px solid var(--gray-light); background: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: 0.2s; min-width: 50px; }
 .count-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
 .count-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
 .custom-count-input { display: flex; align-items: center; gap: 8px; position: relative; }
 .sm-input { width: 80px; text-align: center; }
 .active-border { border-color: var(--primary-color); box-shadow: 0 0 0 2px var(--primary-soft); }
-.input-suffix { color: #6b7280; font-size: 0.9rem; font-weight: 500; }
+.input-suffix { color: var(--gray-color); font-size: 0.9rem; font-weight: 500; }
 
-/* Utilities */
 .form-group { margin-bottom: 20px; }
-.form-label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #374151; }
-.form-control { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; }
+.form-label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: var(--dark-color); }
+.form-control { width: 100%; padding: 10px; border: 1px solid var(--gray-light); border-radius: 8px; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .step-actions, .results-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #f3f4f6; }
+.btn-loading-content { display: flex; align-items: center; gap: 8px; }
 </style>

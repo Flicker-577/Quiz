@@ -21,7 +21,13 @@
       </AppButton>
     </div>
 
-    <div class="stats-row">
+    <div v-if="loading" class="stats-row">
+      <div v-for="n in 3" :key="n" class="skeleton-stat-card">
+        <AppSkeleton type="card" height="100%" borderRadius="12px" />
+      </div>
+    </div>
+
+    <div v-else class="stats-row">
       <div class="stat-card">
         <div class="stat-icon primary">
           <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
@@ -51,7 +57,18 @@
       </div>
     </div>
 
-    <div class="content-card">
+    <div v-if="loading" class="content-card">
+      <div class="toolbar-skeleton">
+        <AppSkeleton width="300px" height="42px" borderRadius="8px" />
+        <AppSkeleton width="180px" height="42px" borderRadius="8px" />
+      </div>
+      <div class="table-skeleton">
+         <AppSkeleton width="100%" height="50px" borderRadius="4px" class="mb-2" />
+         <AppSkeleton :count="5" width="100%" height="60px" borderRadius="4px" />
+      </div>
+    </div>
+
+    <div v-else class="content-card">
       <div class="toolbar">
         <div class="search-box">
           <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -60,11 +77,10 @@
             v-model="searchQuery" 
             placeholder="Search by name or code..." 
             class="search-input"
-            :disabled="loading"
           >
         </div>
         <div class="filter-group">
-          <select v-model="filterStatus" class="filter-select" :disabled="loading">
+          <select v-model="filterStatus" class="filter-select">
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
@@ -72,13 +88,7 @@
         </div>
       </div>
 
-      <div v-if="loading && !courses.length" class="skeleton-wrapper">
-        <div v-for="n in 5" :key="n" class="skeleton-row">
-           <AppSkeleton width="100%" height="60px" />
-        </div>
-      </div>
-
-      <div v-else-if="!loading && !courses.length" class="empty-state">
+      <div v-if="!courses.length" class="empty-state">
         <div class="empty-icon">
           <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" fill="none" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
         </div>
@@ -93,7 +103,6 @@
           :data="filteredCourses" 
           hover 
           striped
-          :loading="loading && courses.length > 0"
         >
           <template #name="{ item }">
             <div class="course-info">
@@ -130,10 +139,10 @@
           
           <template #actions="{ item }">
             <div class="action-group">
-              <button class="icon-btn" title="Edit" @click="openModal(item)" :disabled="saving || deleting">
+              <button class="icon-btn" title="Edit" @click="openModal(item)">
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
               </button>
-              <button class="icon-btn danger" title="Delete" @click="initiateDelete(item)" :disabled="saving || deleting">
+              <button class="icon-btn danger" title="Delete" @click="initiateDelete(item)">
                 <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
               </button>
             </div>
@@ -152,22 +161,21 @@
       :title="editingItem ? 'Edit Course' : 'Add New Course'" 
       width="600px"
       @close="closeModal"
-      :loading="saving"
     >
       <form @submit.prevent="saveCourse" class="modal-form">
         <div class="form-group">
           <label class="form-label">Course Title <span class="required">*</span></label>
-          <input v-model="form.name" type="text" class="form-control" required placeholder="e.g. Bachelor of Science in Computer Science" :disabled="saving">
+          <input v-model="form.name" type="text" class="form-control" required placeholder="e.g. Bachelor of Science in Computer Science">
         </div>
 
         <div class="grid-2">
           <div class="form-group">
             <label class="form-label">Course Code <span class="required">*</span></label>
-            <input v-model="form.code" type="text" class="form-control" required placeholder="e.g. BSC-CS" :disabled="saving">
+            <input v-model="form.code" type="text" class="form-control" required placeholder="e.g. BSC-CS">
           </div>
           <div class="form-group">
             <label class="form-label">Duration (Years) <span class="required">*</span></label>
-            <input v-model.number="form.duration" type="number" class="form-control" required min="1" max="6" :disabled="saving">
+            <input v-model.number="form.duration" type="number" class="form-control" required min="1" max="6">
           </div>
         </div>
 
@@ -178,7 +186,6 @@
               <ToggleSwitch
                 v-model="form.statusBoolean"
                 @change="handleStatusChange"
-                :loading="saving"
                 :variant="form.statusBoolean ? 'success' : 'danger'"
                 label="Course Status"
               />
@@ -189,7 +196,7 @@
 
         <div class="form-group">
           <label class="form-label">Description</label>
-          <textarea v-model="form.description" class="form-control" rows="3" placeholder="Optional course description..." :disabled="saving"></textarea>
+          <textarea v-model="form.description" class="form-control" rows="3" placeholder="Optional course description..."></textarea>
         </div>
 
         <div v-if="formErrors.length" class="form-errors">
@@ -197,13 +204,18 @@
         </div>
 
         <div class="modal-actions">
-          <AppButton variant="outline" @click="closeModal" :disabled="saving">Cancel</AppButton>
-          <AppButton variant="primary" type="submit" :loading="saving">{{ editingItem ? 'Save Changes' : 'Create Course' }}</AppButton>
+          <AppButton variant="outline" @click="closeModal" :disabled="saving" type="button">Cancel</AppButton>
+          <AppButton variant="primary" type="submit" :disabled="saving">
+            <span v-if="saving" class="btn-loading-content">
+              <AppSpinner size="sm" color="light" /> Saving...
+            </span>
+            <span v-else>{{ editingItem ? 'Save Changes' : 'Create Course' }}</span>
+          </AppButton>
         </div>
       </form>
     </AppModal>
 
-    <AppModal :show="showDeleteModal" title="Delete Course" width="450px" @close="showDeleteModal = false" :loading="deleting">
+    <AppModal :show="showDeleteModal" title="Delete Course" width="450px" @close="showDeleteModal = false">
       <div class="confirmation-content">
         <div class="warning-icon">
           <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" fill="none" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
@@ -215,7 +227,12 @@
       <template #footer>
         <div class="modal-actions centered">
           <AppButton variant="outline" @click="showDeleteModal = false" :disabled="deleting">Cancel</AppButton>
-          <AppButton variant="danger" @click="executeDelete" :loading="deleting">Delete Course</AppButton>
+          <AppButton variant="danger" @click="executeDelete" :disabled="deleting">
+            <span v-if="deleting" class="btn-loading-content">
+              <AppSpinner size="sm" color="light" /> Deleting...
+            </span>
+            <span v-else>Delete Course</span>
+          </AppButton>
         </div>
       </template>
     </AppModal>
@@ -240,17 +257,18 @@ import AppModal from '../../components/reusable/AppModal.vue'
 import AppPagination from '../../components/reusable/AppPagination.vue'
 import AppSuccessModal from '../../components/reusable/AppSuccessModal.vue'
 import AppSkeleton from '../../components/reusable/AppSkeleton.vue'
+import AppSpinner from '../../components/reusable/AppSpinner.vue'
 import ToggleSwitch from '../../components/reusable/ToggleSwitch.vue'
 
 export default {
   name: 'Courses',
-  components: { AppTable, AppButton, AppModal, AppPagination, AppSuccessModal, AppSkeleton, ToggleSwitch },
+  components: { AppTable, AppButton, AppModal, AppPagination, AppSuccessModal, AppSkeleton, AppSpinner, ToggleSwitch },
   setup() {
     const authStore = useAuthStore()
     
     // State
     const courses = ref([])
-    const loading = ref(false)
+    const loading = ref(true)
     const saving = ref(false)
     const deleting = ref(false)
     const formErrors = ref([])
@@ -292,7 +310,6 @@ export default {
     ]
 
     const filteredCourses = computed(() => {
-      // Logic handled mostly by API now, but keep client side filter as fallback for current page
       let data = courses.value
       if (searchQuery.value) {
          data = data.filter(c => c.name.toLowerCase().includes(searchQuery.value.toLowerCase()) || c.code.toLowerCase().includes(searchQuery.value.toLowerCase()))
@@ -327,7 +344,8 @@ export default {
       } catch (err) {
         console.error('Error fetching courses:', err)
       } finally {
-        loading.value = false
+        // UPDATED: Added delay for smoother transition
+        setTimeout(() => { loading.value = false }, 500)
       }
     }
 
@@ -452,8 +470,10 @@ export default {
 .admin-page { max-width: 1200px; margin: 0 auto; padding: var(--spacing-md); }
 .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--spacing-lg); }
 .page-title { font-size: 2rem; font-weight: 700; color: var(--dark-color); margin-bottom: 0.5rem; }
+/* PRESERVED: Unique decoration for this page */
 .title-decoration { width: 60px; height: 4px; background: var(--gradient-primary); border-radius: 2px; }
 .page-subtitle { color: var(--gray-color); max-width: 600px; }
+
 .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-lg); }
 .stat-card { background: white; padding: var(--spacing-lg); border-radius: var(--border-radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--gray-light); display: flex; align-items: center; gap: 16px; }
 .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
@@ -470,9 +490,28 @@ export default {
 .search-input { width: 100%; padding: 10px 12px 10px 36px; border: 1px solid var(--gray-light); border-radius: var(--border-radius-md); }
 .filter-select { padding: 10px; border: 1px solid var(--gray-light); border-radius: var(--border-radius-md); min-width: 180px; }
 
-/* Skeleton */
-.skeleton-wrapper { display: flex; flex-direction: column; gap: 1rem; padding: 1rem 0; }
-.skeleton-row { border-radius: 8px; overflow: hidden; }
+/* NEW SKELETON STYLES */
+.skeleton-stat-card {
+  height: 100px;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.toolbar-skeleton {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.table-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mb-2 { margin-bottom: 8px; }
+
+.btn-loading-content { display: flex; align-items: center; gap: 8px; }
 
 /* Empty State */
 .empty-state { padding: 3rem; text-align: center; color: var(--gray-color); display: flex; flex-direction: column; align-items: center; }

@@ -13,7 +13,13 @@
       </div>
     </div>
 
-    <div class="stats-grid mb-4">
+    <div v-if="loading" class="stats-grid mb-4">
+      <div v-for="n in 2" :key="n" class="skeleton-stat-card">
+        <AppSkeleton type="card" height="100%" borderRadius="12px" />
+      </div>
+    </div>
+
+    <div v-else class="stats-grid mb-4">
       <div class="stat-card active-session">
         <div class="stat-icon primary">
           <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -42,7 +48,17 @@
       </div>
     </div>
 
-    <div class="content-card">
+    <div v-if="loading" class="content-card">
+      <div class="card-header-skeleton">
+         <AppSkeleton width="300px" height="28px" class="mb-3" />
+      </div>
+      <div class="table-skeleton">
+        <AppSkeleton width="100%" height="48px" borderRadius="4px" class="mb-2" />
+        <AppSkeleton :count="5" width="100%" height="60px" borderRadius="4px" />
+      </div>
+    </div>
+
+    <div v-else class="content-card">
       <div class="card-header-simple">
         <h3>Academic History & Future Schedule</h3>
       </div>
@@ -50,7 +66,6 @@
       <AppTable 
         :columns="columns" 
         :data="sortedSessions" 
-        :loading="loading" 
         hover
       >
         <template #status="{ item }">
@@ -148,10 +163,15 @@
       </form>
       
       <template #footer>
-        <AppButton variant="outline" @click="closeFormModal">Cancel</AppButton>
-        <AppButton variant="primary" :loading="submitting" @click="saveSession">
-          {{ editingId ? 'Save Changes' : 'Initialize' }}
-        </AppButton>
+        <div class="modal-actions centered">
+          <AppButton variant="outline" @click="closeFormModal" type="button">Cancel</AppButton>
+          <AppButton variant="primary" :disabled="submitting" @click="saveSession">
+            <span v-if="submitting" class="btn-loading-content">
+              <AppSpinner size="sm" color="light" /> Saving...
+            </span>
+            <span v-else>{{ editingId ? 'Save Changes' : 'Initialize' }}</span>
+          </AppButton>
+        </div>
       </template>
     </AppModal>
 
@@ -197,10 +217,15 @@
       </div>
 
       <template #footer>
-        <AppButton variant="outline" @click="showPublishModal = false">Cancel</AppButton>
-        <AppButton variant="success" :loading="publishing" @click="executePublish">
-          Confirm & Activate
-        </AppButton>
+        <div class="modal-actions centered">
+          <AppButton variant="outline" @click="showPublishModal = false">Cancel</AppButton>
+          <AppButton variant="success" :disabled="publishing" @click="executePublish">
+            <span v-if="publishing" class="btn-loading-content">
+              <AppSpinner size="sm" color="light" /> Processing...
+            </span>
+            <span v-else>Confirm & Activate</span>
+          </AppButton>
+        </div>
       </template>
     </AppModal>
   </div>
@@ -211,11 +236,13 @@ import { ref, computed, onMounted } from 'vue'
 import AppTable from '@/components/reusable/AppTable.vue'
 import AppButton from '@/components/reusable/AppButton.vue'
 import AppModal from '@/components/reusable/AppModal.vue'
+import AppSkeleton from '@/components/reusable/AppSkeleton.vue'
+import AppSpinner from '@/components/reusable/AppSpinner.vue'
 import api from '@/api/api'
 
 export default {
   name: 'AcademicYearManager',
-  components: { AppTable, AppButton, AppModal },
+  components: { AppTable, AppButton, AppModal, AppSkeleton, AppSpinner },
   setup() {
     // --- State ---
     const sessions = ref([])
@@ -253,11 +280,9 @@ export default {
             if (a.is_current) return -1;
             if (b.is_current) return 1;
             
-            // Prioritize Drafts (Future) over Closed (Past)
             if (a.status === 'draft' && b.status === 'closed') return -1;
             if (a.status === 'closed' && b.status === 'draft') return 1;
             
-            // Otherwise sort by date
             return new Date(a.start_date) - new Date(b.start_date);
         });
     })
@@ -283,7 +308,6 @@ export default {
       return 'text-success'
     })
 
-    // purely for display in the modal
     const estimatedNextYear = computed(() => {
         if (!sessionToPublish.value) return 'Next Year'
         try {
@@ -298,15 +322,15 @@ export default {
     // --- API Actions ---
 
     const fetchSessions = async () => {
+      loading.value = true
+      // 4. UPDATED: Delay loading state
       try {
-        loading.value = true
-        // Backend now handles the "Auto-generate future drafts" logic on index
         const response = await api.get('/academic-sessions')
         sessions.value = response.data
       } catch (error) {
         console.error('Failed to fetch sessions:', error)
       } finally {
-        loading.value = false
+        setTimeout(() => { loading.value = false }, 500)
       }
     }
 
@@ -324,7 +348,7 @@ export default {
         }
         
         closeFormModal()
-        await fetchSessions() // Refresh list to see auto-generated future years
+        await fetchSessions()
       } catch (error) {
         console.error('Save failed:', error)
         alert('Failed to save session: ' + (error.response?.data?.message || error.message))
@@ -342,7 +366,7 @@ export default {
         
         showPublishModal.value = false
         alert('Academic Year Activated! Students have been promoted.')
-        await fetchSessions() // Refresh to see status changes and new drafts
+        await fetchSessions()
       } catch (error) {
         console.error('Publish failed:', error)
         alert('Failed to publish year: ' + (error.response?.data?.message || error.message))
@@ -362,12 +386,10 @@ export default {
 
     const editSession = (item) => {
       editingId.value = item.id
-      // Map data to form
       form.value = {
           name: item.name,
           start_date: item.start_date,
           end_date: item.end_date,
-          // Safely extract semester dates
           sem1_start: item.semesters?.find(s => s.number === 1)?.start_date || '',
           sem1_end: item.semesters?.find(s => s.number === 1)?.end_date || '',
           sem2_start: item.semesters?.find(s => s.number === 2)?.start_date || '',
@@ -417,6 +439,25 @@ export default {
 .stat-info .value { font-size: 1.5rem; font-weight: 700; color: var(--dark-color); margin: 4px 0; }
 .status-badge { position: absolute; top: 12px; right: 12px; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
 .status-badge.active { background: var(--success-soft); color: var(--success-dark); }
+
+/* NEW SKELETON STYLES */
+.skeleton-stat-card {
+  height: 100px;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.table-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-loading-content { display: flex; align-items: center; gap: 8px; }
+.modal-actions.centered { display: flex; justify-content: flex-end; gap: var(--spacing-sm); }
+.mb-2 { margin-bottom: 8px; }
+.mb-3 { margin-bottom: 16px; }
 
 /* Table */
 .content-card { background: white; border-radius: var(--border-radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--gray-light); padding: var(--spacing-lg); }

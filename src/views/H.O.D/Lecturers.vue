@@ -16,7 +16,13 @@
       </div>
     </div>
 
-    <div class="stats-row">
+    <div v-if="loading" class="stats-row">
+      <div v-for="n in 3" :key="n" class="skeleton-stat-card">
+        <AppSkeleton type="card" height="100%" borderRadius="12px" />
+      </div>
+    </div>
+
+    <div v-else class="stats-row">
       <div class="stat-card">
         <div class="stat-icon primary">
           <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
@@ -46,7 +52,18 @@
       </div>
     </div>
 
-    <div class="content-card">
+    <div v-if="loading" class="content-card">
+      <div class="toolbar-skeleton">
+        <AppSkeleton width="300px" height="42px" borderRadius="8px" />
+        <AppSkeleton width="100px" height="42px" borderRadius="8px" />
+      </div>
+      <div class="table-skeleton">
+         <AppSkeleton width="100%" height="50px" borderRadius="4px" class="mb-2" />
+         <AppSkeleton :count="5" width="100%" height="60px" borderRadius="4px" />
+      </div>
+    </div>
+
+    <div v-else class="content-card">
       <div class="toolbar">
         <div class="search-box">
           <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -55,10 +72,9 @@
         <AppButton variant="outline" @click="fetchLecturers(1)" title="Refresh Data">Refresh</AppButton>
       </div>
 
-      <div v-if="loading && !lecturers.length" class="skeleton-wrapper">
-         <div v-for="n in 5" :key="n" class="skeleton-row">
-           <AppSkeleton width="100%" height="60px" />
-         </div>
+      <div v-if="!lecturers.length" class="empty-state">
+         <h3>No Lecturers Found</h3>
+         <p>Get started by registering your first lecturer.</p>
       </div>
 
       <div v-else>
@@ -144,9 +160,12 @@
         </div>
         
         <div class="modal-actions">
-          <AppButton variant="outline" @click="closeModal">Cancel</AppButton>
-          <AppButton variant="primary" type="submit" :loading="loading">
-            {{ editingItem ? 'Save Changes' : 'Register Lecturer' }}
+          <AppButton variant="outline" @click="closeModal" type="button">Cancel</AppButton>
+          <AppButton variant="primary" type="submit" :disabled="loading">
+            <span v-if="loading" class="btn-loading-content">
+              <AppSpinner size="sm" color="light" /> Saving...
+            </span>
+            <span v-else>{{ editingItem ? 'Save Changes' : 'Register Lecturer' }}</span>
           </AppButton>
         </div>
       </form>
@@ -163,7 +182,12 @@
       <template #footer>
         <div class="modal-actions centered">
           <AppButton variant="outline" @click="showDeleteModal = false">Cancel</AppButton>
-          <AppButton variant="danger" @click="executeDelete" :loading="loading">Remove Lecturer</AppButton>
+          <AppButton variant="danger" @click="executeDelete" :disabled="loading">
+             <span v-if="loading" class="btn-loading-content">
+              <AppSpinner size="sm" color="light" /> Removing...
+            </span>
+            <span v-else>Remove Lecturer</span>
+          </AppButton>
         </div>
       </template>
     </AppModal>
@@ -187,13 +211,14 @@ import AppModal from '../../components/reusable/AppModal.vue'
 import AppPagination from '../../components/reusable/AppPagination.vue'
 import AppSuccessModal from '../../components/reusable/AppSuccessModal.vue'
 import AppSkeleton from '../../components/reusable/AppSkeleton.vue'
+import AppSpinner from '../../components/reusable/AppSpinner.vue'
 import api from '@/api/api'
 
 const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : ''
 
 export default {
   name: 'Lecturers',
-  components: { AppTable, AppButton, AppModal, AppPagination, AppSuccessModal, AppSkeleton },
+  components: { AppTable, AppButton, AppModal, AppPagination, AppSuccessModal, AppSkeleton, AppSpinner },
   setup() {
     const lecturerStore = useLecturerStore()
     
@@ -233,24 +258,20 @@ export default {
     }
 
     const fetchLecturers = async (page = 1) => {
+      loading.value = true
       try {
-        loading.value = true
-        // Assuming store update to handle pagination params, or passing directly to API
-        // If store doesn't support pagination yet, we fetch all and manually paginate (fallback)
         await lecturerStore.fetchLecturers(page) 
         
-        // Mock pagination update if store doesn't return meta (Update this based on your actual API/Store response)
-        // If your store sets a pagination state, access it here: pagination.value = lecturerStore.pagination
         if(lecturerStore.pagination) {
            pagination.value = lecturerStore.pagination
         } else {
-           // Fallback if API returns all data without meta
            pagination.value.total = lecturerStore.lecturers.length
         }
       } catch (error) {
         console.error('Failed to fetch lecturers:', error)
       } finally {
-        loading.value = false
+        // UPDATED: Added delay for smoother transition
+        setTimeout(() => { loading.value = false }, 500)
       }
     }
 
@@ -261,8 +282,8 @@ export default {
     }
 
     const saveLecturer = async () => {
+      loading.value = true
       try {
-        loading.value = true
         const lecturerData = { name: form.value.name, email: form.value.email, phone: form.value.phone, is_active: Boolean(form.value.is_active) }
 
         if (editingItem.value) {
@@ -284,8 +305,8 @@ export default {
 
     const executeDelete = async () => {
       if (itemToDelete.value) {
+        loading.value = true
         try {
-          loading.value = true
           await lecturerStore.deleteLecturer(itemToDelete.value.id)
           showDeleteModal.value = false
           itemToDelete.value = null
@@ -334,11 +355,13 @@ export default {
 .admin-page { max-width: 1200px; margin: 0 auto; padding: var(--spacing-md); }
 .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--spacing-lg); }
 .page-title { font-size: 2rem; font-weight: 700; color: var(--dark-color); margin-bottom: 0.5rem; }
+/* PRESERVED: Unique decoration for this page */
 .title-decoration { width: 60px; height: 4px; background: var(--gradient-primary); border-radius: 2px; }
 .page-subtitle { color: var(--gray-color); margin-bottom: 8px; }
 .department-badge { margin-top: 8px; }
 .header-actions { display: flex; gap: var(--spacing-sm); }
 .icon-wrapper { margin-right: 8px; display: flex; align-items: center; }
+
 .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-lg); }
 .stat-card { background: white; padding: var(--spacing-lg); border-radius: var(--border-radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--gray-light); display: flex; align-items: center; gap: 16px; }
 .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
@@ -354,9 +377,29 @@ export default {
 .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-color); }
 .search-input { width: 100%; padding: 10px 12px 10px 36px; border: 1px solid var(--gray-light); border-radius: var(--border-radius-md); }
 
-/* Skeleton */
-.skeleton-wrapper { display: flex; flex-direction: column; gap: 1rem; padding: 1rem 0; }
-.skeleton-row { border-radius: 8px; overflow: hidden; }
+/* NEW SKELETON STYLES */
+.skeleton-stat-card {
+  height: 100px;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.toolbar-skeleton {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.table-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mb-2 { margin-bottom: 8px; }
+
+.btn-loading-content { display: flex; align-items: center; gap: 8px; }
+.empty-state { padding: 40px; text-align: center; color: var(--gray-color); }
 
 /* User Cell */
 .user-cell { display: flex; align-items: center; gap: 12px; }

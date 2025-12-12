@@ -3,8 +3,8 @@
     <div class="questions-manager">
       
       <div v-if="loading" class="text-center p-5">
-        <div class="spinner"></div>
-        <p class="mt-3" style="color: var(--gray-dark)">Loading questions...</p>
+        <AppSpinner size="lg" color="primary" />
+        <p class="mt-3" style="color: var(--gray-color)">Loading questions...</p>
       </div>
       
       <div v-else>
@@ -21,10 +21,10 @@
         </div>
 
         <div v-else class="questions-list-scroll">
-          <div v-for="(question, index) in localQuestions" :key="index" class="card q-card">
+          <div v-for="(question, index) in localQuestions" :key="index" class="q-card">
             
             <div v-if="editingIndex !== index">
-              <div class="card-header q-header">
+              <div class="q-header">
                 <div class="q-title">
                   <span class="q-number">Q{{ index + 1 }}</span>
                   <span class="badge">{{ getTypeName(question.type) }}</span>
@@ -119,13 +119,19 @@
     <template #footer>
        <div class="modal-footer">
          <AppButton variant="outline" @click="$emit('close')">Close</AppButton>
-         <AppButton @click="saveAll" :loading="saving">Save All Changes</AppButton>
+         <AppButton @click="saveAll" :disabled="saving">
+            <span v-if="saving" class="btn-loading-content">
+              <AppSpinner size="sm" color="light" /> Saving...
+            </span>
+            <span v-else>Save All Changes</span>
+         </AppButton>
        </div>
     </template>
   </AppModal>
 </template>
 
 <script>
+// Logic remains consistent, imported AppSpinner for loading states
 import { ref, watch } from 'vue'
 import AppModal from '../../components/reusable/AppModal.vue'
 import AppButton from '../../components/reusable/AppButton.vue'
@@ -144,12 +150,8 @@ export default {
     const editingIndex = ref(-1)
     const tempQuestion = ref(null)
 
-    const getTypeName = (type) => {
-      if (type === 'multiple') return 'Multiple Choice';
-      return 'True/False';
-    }
+    const getTypeName = (type) => type === 'multiple' ? 'Multiple Choice' : 'True/False'
 
-    // --- 1. Load Data ---
     watch(() => props.show, async (val) => {
       if (val && props.quiz) {
         loading.value = true
@@ -157,246 +159,81 @@ export default {
         try {
            const res = await api.get(`/lecturer/quizzes/${props.quiz.id}`)
            const questionsData = res.data.questions || [];
-
            localQuestions.value = questionsData.map(q => {
               let isTrue = false;
               if (typeof q.correct_answer === 'boolean') isTrue = q.correct_answer;
               else if (typeof q.correct_answer === 'string') isTrue = q.correct_answer.toLowerCase() === 'true';
-              
               const safeType = q.question_type === 'multiple_choice' ? 'multiple' : 'truefalse';
-
-              return {
-                id: q.id, 
-                text: q.question_text || '',
-                type: safeType,
-                points: q.marks || 1,
-                options: q.options || [], 
-                correctOption: (q.options && q.correct_answer) ? q.options.indexOf(q.correct_answer) : 0, 
-                correctAnswer: isTrue 
-              }
+              return { id: q.id, text: q.question_text || '', type: safeType, points: q.marks || 1, options: q.options || [], correctOption: (q.options && q.correct_answer) ? q.options.indexOf(q.correct_answer) : 0, correctAnswer: isTrue }
            })
-        } catch (e) { 
-           console.error("Error loading questions:", e) 
-           alert("Failed to load questions.")
-        } finally { 
-           loading.value = false 
-        }
+        } catch (e) { console.error("Error loading questions:", e) } finally { loading.value = false }
       }
     })
 
-    // --- 2. Watcher for Type Change ---
     watch(() => tempQuestion.value?.type, (newType) => {
-        if (newType === 'truefalse') {
-            if (typeof tempQuestion.value.correctAnswer !== 'boolean') {
-                tempQuestion.value.correctAnswer = true;
-            }
-        } else if (newType === 'multiple') {
-            if (!tempQuestion.value.options || tempQuestion.value.options.length === 0) {
-                tempQuestion.value.options = ['Option 1', 'Option 2'];
-                tempQuestion.value.correctOption = 0;
-            }
-        }
+        if (newType === 'truefalse') { if (typeof tempQuestion.value.correctAnswer !== 'boolean') tempQuestion.value.correctAnswer = true; } 
+        else if (newType === 'multiple') { if (!tempQuestion.value.options || tempQuestion.value.options.length === 0) { tempQuestion.value.options = ['Option 1', 'Option 2']; tempQuestion.value.correctOption = 0; } }
     })
 
-    const startEditing = (index) => {
-       editingIndex.value = index
-       tempQuestion.value = JSON.parse(JSON.stringify(localQuestions.value[index]))
-    }
-
+    const startEditing = (index) => { editingIndex.value = index; tempQuestion.value = JSON.parse(JSON.stringify(localQuestions.value[index])) }
     const cancelEdit = () => { editingIndex.value = -1; tempQuestion.value = null }
-    
-    const saveEdit = (index) => {
-       if (!tempQuestion.value.text) { alert("Question text required"); return; }
-       localQuestions.value[index] = tempQuestion.value
-       cancelEdit()
-    }
-
-    const removeQuestion = (index) => { 
-      if(confirm("Delete this question?")) localQuestions.value.splice(index, 1) 
-    }
-
-    const addNewQuestion = () => {
-       localQuestions.value.push({
-          text: 'New Question', 
-          type: 'multiple', 
-          points: 1, 
-          options: ['Option 1','Option 2'], 
-          correctOption: 0,
-          correctAnswer: true
-       })
-       startEditing(localQuestions.value.length - 1)
-    }
-
+    const saveEdit = (index) => { if (!tempQuestion.value.text) { alert("Question text required"); return; } localQuestions.value[index] = tempQuestion.value; cancelEdit() }
+    const removeQuestion = (index) => { if(confirm("Delete this question?")) localQuestions.value.splice(index, 1) }
+    const addNewQuestion = () => { localQuestions.value.push({ text: 'New Question', type: 'multiple', points: 1, options: ['Option 1','Option 2'], correctOption: 0, correctAnswer: true }); startEditing(localQuestions.value.length - 1) }
     const addOption = () => tempQuestion.value.options.push('')
     const removeOption = (i) => tempQuestion.value.options.splice(i, 1)
 
     const saveAll = async () => {
        saving.value = true
        try {
-          const payload = localQuestions.value.map(q => {
-             if (q.type === 'multiple' && !q.options) q.options = [];
-             return q;
-          });
-
-          await api.put(`/lecturer/quizzes/${props.quiz.id}/questions`, {
-             questions: payload
-          })
-          emit('save')
-          emit('close')
-       } catch (e) {
-          console.error(e)
-          alert('Failed to save changes')
-       } finally {
-          saving.value = false
-       }
+          const payload = localQuestions.value.map(q => { if (q.type === 'multiple' && !q.options) q.options = []; return q; });
+          await api.put(`/lecturer/quizzes/${props.quiz.id}/questions`, { questions: payload })
+          emit('save'); emit('close')
+       } catch (e) { alert('Failed to save changes') } finally { saving.value = false }
     }
 
-    return { 
-       loading, saving, localQuestions, editingIndex, tempQuestion,
-       startEditing, cancelEdit, saveEdit, removeQuestion, addNewQuestion, 
-       addOption, removeOption, saveAll, getTypeName
-    }
+    return { loading, saving, localQuestions, editingIndex, tempQuestion, startEditing, cancelEdit, saveEdit, removeQuestion, addNewQuestion, addOption, removeOption, saveAll, getTypeName }
   }
 }
 </script>
 
 <style scoped>
-/* Reuse Global Variables */
-.questions-list-scroll { 
-  max-height: 60vh; 
-  overflow-y: auto; 
-  padding-right: var(--spacing-sm); 
-}
-
-/* Card Specific Overrides */
-.q-card {
-  padding: 0; /* Reset default card padding for custom header */
-  overflow: hidden;
-  border-left: 4px solid transparent;
-  transition: transform 0.2s ease;
-}
-
-.q-card:hover {
-  transform: translateY(-2px);
-  border-left-color: var(--primary-color);
-}
-
-/* Header */
-.q-header {
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between; 
-  padding: var(--spacing-md);
-  background-color: var(--light-color);
-  border-bottom: 1px solid var(--gray-light);
-  margin-bottom: 0;
-}
-
-.q-title { display: flex; align-items: center; gap: var(--spacing-sm); }
-
-.q-number {
-  font-weight: 700;
-  color: var(--dark-color);
-  font-size: var(--font-size-lg);
-}
-
-.badge { 
-  background: var(--primary-soft); 
-  color: var(--primary-dark); 
-  padding: 2px 8px; 
-  border-radius: var(--border-radius-xl); 
-  font-size: var(--font-size-xs); 
-  text-transform: uppercase; 
-  font-weight: 600;
-}
-
-.points { color: var(--gray-color); font-size: var(--font-size-sm); font-weight: 500; }
-
-.q-body {
-  padding: var(--spacing-md);
-}
-
-.q-text {
-  font-size: var(--font-size-base);
-  color: var(--dark-color);
-  margin-bottom: var(--spacing-sm);
-  font-weight: 500;
-}
-
-/* Actions */
-.actions { display: flex; gap: var(--spacing-xs); }
+.questions-list-scroll { max-height: 60vh; overflow-y: auto; padding-right: 5px; }
+.q-card { padding: 0; overflow: hidden; border-left: 4px solid transparent; transition: transform 0.2s ease; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--gray-light); background: white; }
+.q-card:hover { transform: translateY(-2px); border-left-color: var(--primary-color); }
+.q-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background-color: #f9fafb; border-bottom: 1px solid var(--gray-light); }
+.q-title { display: flex; align-items: center; gap: 10px; }
+.q-number { font-weight: 700; color: var(--dark-color); font-size: 1rem; }
+.badge { background: #e0e7ff; color: #4338ca; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; }
+.points { color: var(--gray-color); font-size: 0.85rem; font-weight: 500; }
+.q-body { padding: 16px; }
+.q-text { font-size: 1rem; color: var(--dark-color); margin-bottom: 10px; font-weight: 500; }
+.actions { display: flex; gap: 5px; }
 .icon-btn { background: none; border: none; cursor: pointer; padding: 4px; color: var(--gray-color); transition: color 0.2s; }
-.icon-btn:hover { background: var(--gray-light); border-radius: var(--border-radius-sm); }
-.icon-btn.edit:hover { color: var(--warning-color); }
-.icon-btn.delete:hover { color: var(--danger-color); }
+.icon-btn:hover { background: #f3f4f6; border-radius: 4px; }
+.icon-btn.edit:hover { color: #f59e0b; }
+.icon-btn.delete:hover { color: #dc2626; }
 
-/* Preview Styles */
-.preview-opts { display: flex; flex-direction: column; gap: var(--spacing-xs); }
-.preview-opt { 
-  display: flex; gap: 8px; 
-  font-size: var(--font-size-sm); 
-  color: var(--gray-dark); 
-  padding: 6px 12px; 
-  border-radius: var(--border-radius-sm); 
-  border: 1px solid transparent;
-}
-.preview-opt.correct { 
-  background: var(--success-soft); 
-  color: var(--success-dark); 
-  border-color: var(--success-light);
-  font-weight: 500; 
-}
+.preview-opts { display: flex; flex-direction: column; gap: 5px; }
+.preview-opt { display: flex; gap: 8px; font-size: 0.9rem; color: #4b5563; padding: 6px 12px; border-radius: 4px; border: 1px solid transparent; }
+.preview-opt.correct { background: #ecfdf5; color: #065f46; border-color: #10b981; font-weight: 500; }
 .opt-label { font-weight: 600; color: var(--gray-color); }
 
-/* Edit Form Styles */
-.edit-form { padding: var(--spacing-md); background: var(--light-color); }
+.edit-form { padding: 16px; background: #f9fafb; }
+.options-container { background: white; padding: 16px; border-radius: 8px; border: 1px solid var(--gray-light); margin-bottom: 16px; }
+.opt-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+.sm-control { padding: 6px 10px; }
+.btn-text { background: none; border: none; color: var(--primary-color); font-weight: 600; cursor: pointer; padding: 0; font-size: 0.85rem; }
 
-.options-container {
-  background: white;
-  padding: var(--spacing-md);
-  border-radius: var(--border-radius-md);
-  border: 1px solid var(--gray-light);
-  margin-bottom: var(--spacing-md);
-}
-
-.opt-row { display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-sm); align-items: center; }
-.sm-control { padding: var(--spacing-xs) var(--spacing-sm); }
-
-.btn-text {
-  background: none;
-  border: none;
-  color: var(--primary-color);
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  font-size: var(--font-size-sm);
-}
-
-/* True/False Cards */
-.tf-options { display: flex; gap: var(--spacing-md); }
-.tf-card { 
-  flex: 1;
-  display: flex; 
-  align-items: center; 
-  justify-content: center;
-  gap: 8px; 
-  cursor: pointer; 
-  padding: var(--spacing-md); 
-  border: 2px solid var(--gray-light); 
-  border-radius: var(--border-radius-md); 
-  background: white; 
-  transition: all 0.2s; 
-}
-.tf-card:hover { border-color: var(--primary-light); }
-.tf-card.selected { 
-  border-color: var(--primary-color); 
-  background: var(--primary-soft);
-  color: var(--primary-dark);
-  font-weight: 700;
-}
+.tf-options { display: flex; gap: 15px; }
+.tf-card { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 12px; border: 2px solid var(--gray-light); border-radius: 8px; background: white; transition: all 0.2s; }
+.tf-card:hover { border-color: #93c5fd; }
+.tf-card.selected { border-color: var(--primary-color); background: #eff6ff; color: #1e40af; font-weight: 700; }
 .hidden-radio { display: none; }
 
-.edit-footer { display: flex; justify-content: flex-end; gap: var(--spacing-sm); margin-top: var(--spacing-md); }
-.modal-footer { display: flex; justify-content: flex-end; gap: var(--spacing-sm); padding-top: var(--spacing-md); border-top: 1px solid var(--gray-light); }
+.edit-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding-top: 16px; border-top: 1px solid var(--gray-light); }
 .toolbar { display: flex; justify-content: space-between; align-items: center; }
+.text-success { color: #10b981; } .text-danger { color: #dc2626; }
+.btn-loading-content { display: flex; align-items: center; gap: 8px; }
 </style>

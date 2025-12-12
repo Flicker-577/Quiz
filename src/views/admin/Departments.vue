@@ -16,79 +16,83 @@
       </AppButton>
     </div>
 
-    <div class="stats-row">
-      <template v-if="loading">
-        <div v-for="n in 4" :key="n" class="stat-card">
-          <AppSkeleton type="circle" width="48px" height="48px" />
-          <div class="stat-info" style="width: 100%">
-            <AppSkeleton width="60%" height="0.8rem" class="mb-1" />
-            <AppSkeleton width="40%" height="1.5rem" />
-          </div>
-        </div>
-      </template>
-
-      <template v-else>
-        <div class="stat-card">
-          <div class="stat-icon primary">
-            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <span class="label">Total Departments</span>
-            <span class="value">{{ statistics.total_departments || 0 }}</span>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon secondary">
-            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <span class="label">Active Courses</span>
-            <span class="value">{{ statistics.active_courses || 0 }}</span>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon success">
-            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <span class="label">Active Departments</span>
-            <span class="value">{{ statistics.active_departments || 0 }}</span>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon warning">
-            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
-          </div>
-          <div class="stat-info">
-            <span class="label">Departments with HOD</span>
-            <span class="value">{{ statistics.departments_with_hod || 0 }}</span>
-          </div>
-        </div>
-      </template>
+    <div v-if="loading" class="stats-row">
+      <div v-for="n in 4" :key="n" class="skeleton-stat-card">
+        <AppSkeleton type="card" height="100%" borderRadius="12px" />
+      </div>
     </div>
 
-    <div class="content-card">
+    <div v-else class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon primary">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="label">Total Departments</span>
+          <span class="value">{{ statistics.total_departments || 0 }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon secondary">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="label">Active Courses</span>
+          <span class="value">{{ statistics.active_courses || 0 }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon success">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="label">Active Departments</span>
+          <span class="value">{{ statistics.active_departments || 0 }}</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon warning">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="label">Departments with HOD</span>
+          <span class="value">{{ statistics.departments_with_hod || 0 }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="loading" class="content-card">
+      <div class="toolbar-skeleton">
+        <AppSkeleton width="300px" height="42px" borderRadius="8px" />
+      </div>
+      <div class="table-skeleton">
+        <AppSkeleton width="100%" height="50px" borderRadius="4px" style="margin-bottom: 10px" />
+        <AppSkeleton :count="5" width="100%" height="60px" borderRadius="4px" />
+      </div>
+    </div>
+
+    <div v-else class="content-card">
       <div class="toolbar">
         <div class="search-box">
           <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
@@ -99,89 +103,72 @@
         </div>
       </div>
 
-      <div v-if="loading" class="skeleton-table">
-        <div class="skeleton-header">
-           <AppSkeleton width="100%" height="40px" borderRadius="8px" />
-        </div>
-        <div class="skeleton-rows">
-           <div v-for="n in 5" :key="n" class="skeleton-row">
-              <div class="s-cell" style="width: 25%"><AppSkeleton width="80%" /></div>
-              <div class="s-cell" style="width: 10%"><AppSkeleton width="60%" /></div>
-              <div class="s-cell" style="width: 15%"><AppSkeleton width="60%" borderRadius="12px" /></div>
-              <div class="s-cell" style="width: 20%"><AppSkeleton type="circle" width="32px" height="32px" /><AppSkeleton width="100px" class="ml-2" /></div>
-              <div class="s-cell" style="width: 30%"><AppSkeleton width="90%" /></div>
-           </div>
-        </div>
+      <AppTable 
+        :columns="columns" 
+        :data="filteredDepartments" 
+        hover 
+        striped
+      >
+        <template #code="{ item }">
+          <span class="badge code">{{ item.code }}</span>
+        </template>
+
+        <template #status="{ item }">
+          <ToggleSwitch
+            :modelValue="item.status === 'active'"
+            @change="toggleDepartmentStatus(item, $event)"
+            :loading="loadingStatus[item.id]"
+            :variant="item.status === 'active' ? 'success' : 'danger'"
+            :label="item.status === 'active' ? 'Active' : 'Inactive'"
+          />
+        </template>
+
+        <template #head="{ item }">
+          <div class="user-cell" v-if="item.hod">
+            <div class="avatar-xs">{{ getInitials(item.hod.name) }}</div>
+            <div class="user-info">
+              <span class="text-sm">{{ item.hod.name }}</span>
+              <span class="text-xs text-muted">{{ item.hod.email }}</span>
+            </div>
+          </div>
+          <span v-else class="text-muted">Unassigned</span>
+        </template>
+        
+        <template #actions="{ item }">
+          <div class="action-group">
+            <button class="icon-btn" title="Edit" @click="openModal(item)">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button class="icon-btn danger" title="Delete" @click="initiateDelete(item)">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
+        </template>
+      </AppTable>
+
+      <div v-if="departments.length === 0" class="empty-state">
+        <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" fill="none" stroke-width="1">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <h3>No Departments Found</h3>
+        <p>Get started by creating your first department.</p>
+        <AppButton variant="primary" @click="openModal()">Create Department</AppButton>
       </div>
 
-      <template v-else>
-        <AppTable 
-          :columns="columns" 
-          :data="filteredDepartments" 
-          hover 
-          striped
-        >
-          <template #code="{ item }">
-            <span class="badge code">{{ item.code }}</span>
-          </template>
-
-          <template #status="{ item }">
-            <ToggleSwitch
-              :modelValue="item.status === 'active'"
-              @change="toggleDepartmentStatus(item, $event)"
-              :loading="loadingStatus[item.id]"
-              :variant="item.status === 'active' ? 'success' : 'danger'"
-              :label="item.status === 'active' ? 'Active' : 'Inactive'"
-            />
-          </template>
-
-          <template #head="{ item }">
-            <div class="user-cell" v-if="item.hod">
-              <div class="avatar-xs">{{ getInitials(item.hod.name) }}</div>
-              <div class="user-info">
-                <span class="text-sm">{{ item.hod.name }}</span>
-                <span class="text-xs text-muted">{{ item.hod.email }}</span>
-              </div>
-            </div>
-            <span v-else class="text-muted">Unassigned</span>
-          </template>
-          
-          <template #actions="{ item }">
-            <div class="action-group">
-              <button class="icon-btn" title="Edit" @click="openModal(item)">
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-              </button>
-              <button class="icon-btn danger" title="Delete" @click="initiateDelete(item)">
-                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-              </button>
-            </div>
-          </template>
-        </AppTable>
-
-        <div v-if="departments.length === 0" class="empty-state">
-          <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" fill="none" stroke-width="1">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-          </svg>
-          <h3>No Departments Found</h3>
-          <p>Get started by creating your first department.</p>
-          <AppButton variant="primary" @click="openModal()">Create Department</AppButton>
-        </div>
-
-        <AppPagination 
-          v-if="paginationMeta && paginationMeta.last_page > 1"
-          :meta="paginationMeta"
-          @change="fetchDepartments"
-        />
-      </template>
+      <AppPagination 
+        v-if="paginationMeta && paginationMeta.last_page > 1"
+        :meta="paginationMeta"
+        @change="fetchDepartments"
+      />
     </div>
 
     <AppModal :show="showModal" :title="editingItem ? 'Edit Department' : 'New Department'" width="550px" @close="closeModal">
@@ -203,9 +190,12 @@
         </div>
         
         <div class="modal-actions">
-          <AppButton variant="outline" @click="closeModal" :disabled="saving">Cancel</AppButton>
-          <AppButton variant="primary" type="submit" :loading="saving">
-            {{ editingItem ? 'Update Department' : 'Create Department' }}
+          <AppButton variant="outline" @click="closeModal" type="button">Cancel</AppButton>
+          <AppButton variant="primary" type="submit" :disabled="saving">
+            <span v-if="saving" class="btn-loading-content">
+              <AppSpinner size="sm" color="light" /> Saving...
+            </span>
+            <span v-else>{{ editingItem ? 'Update Department' : 'Create Department' }}</span>
           </AppButton>
         </div>
       </form>
@@ -229,8 +219,11 @@
       <template #footer>
         <div class="modal-actions centered">
           <AppButton variant="outline" @click="showDeleteModal = false">Cancel</AppButton>
-          <AppButton variant="danger" @click="executeDelete" :loading="deleting">
-            Delete Department
+          <AppButton variant="danger" @click="executeDelete" :disabled="deleting">
+            <span v-if="deleting" class="btn-loading-content">
+              <AppSpinner size="sm" color="light" /> Deleting...
+            </span>
+            <span v-else>Delete Department</span>
           </AppButton>
         </div>
       </template>
@@ -253,12 +246,12 @@ import AppTable from '../../components/reusable/AppTable.vue'
 import AppButton from '../../components/reusable/AppButton.vue'
 import AppModal from '../../components/reusable/AppModal.vue'
 import AppSkeleton from '../../components/reusable/AppSkeleton.vue'
+import AppSpinner from '../../components/reusable/AppSpinner.vue'
 import AppPagination from '../../components/reusable/AppPagination.vue'
 import AppSuccessModal from '../../components/reusable/AppSuccessModal.vue'
 import ToggleSwitch from '../../components/reusable/ToggleSwitch.vue'
 import api from '@/api/api'
 
-// Helper function to get initials
 const getInitials = (name) => {
   if (!name) return ''
   return name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase()
@@ -272,6 +265,7 @@ export default {
     AppModal, 
     ToggleSwitch, 
     AppSkeleton, 
+    AppSpinner,
     AppPagination,
     AppSuccessModal 
   },
@@ -294,11 +288,9 @@ export default {
     const loadingStatus = ref({})
     const paginationMeta = ref(null)
     
-    // Data
     const departments = ref([])
     const statistics = ref({})
     
-    // Form
     const form = ref({ 
       name: '', 
       code: '', 
@@ -314,31 +306,23 @@ export default {
       { key: 'description', label: 'Description', width: '20%' },
     ]
 
-    // Computed properties
     const filteredDepartments = computed(() => {
       if (!searchQuery.value) return departments.value
-      
       const query = searchQuery.value.toLowerCase()
       return departments.value.filter(d => 
         d.name.toLowerCase().includes(query) ||
         d.code.toLowerCase().includes(query) ||
-        (d.hod && d.hod.name.toLowerCase().includes(query)) ||
-        (d.hod && d.hod.email && d.hod.email.toLowerCase().includes(query))
+        (d.hod && d.hod.name.toLowerCase().includes(query))
       )
     })
 
-    // Methods
     const fetchDepartments = async (page = 1) => {
       loading.value = true
       
-      // Delay for skeleton visualization
-      await new Promise(resolve => setTimeout(resolve, 600))
-
       try {
         const response = await api.get(`/departments?page=${page}`)
         
         if (response.data.success) {
-          // Handle standard Laravel pagination structure if present, else array
           const rawData = response.data.data.data ? response.data.data.data : response.data.data
           
           if (response.data.data.current_page) {
@@ -360,13 +344,14 @@ export default {
             hod: dept.hod || null
           }))
         } else {
-          toast.error('Failed to fetch departments: ' + (response.data.message || 'Unknown error'))
+          toast.error('Failed to fetch departments')
         }
       } catch (error) {
         console.error('Error fetching departments:', error)
         toast.error('Error loading departments')
       } finally {
-        loading.value = false
+        // 4. UPDATED: Delay loading state switch like CreateHod
+        setTimeout(() => { loading.value = false }, 500)
       }
     }
 
@@ -391,12 +376,7 @@ export default {
           status: item.status || 'active'
         }
       } else {
-        form.value = { 
-          name: '', 
-          code: '', 
-          description: '', 
-          status: 'active' 
-        }
+        form.value = { name: '', code: '', description: '', status: 'active' }
       }
       showModal.value = true
     }
@@ -429,7 +409,7 @@ export default {
         if (error.response?.data?.errors) {
           Object.values(error.response.data.errors).flat().forEach(msg => toast.error(msg))
         } else {
-          toast.error('Error saving department: ' + (error.message || 'Unknown error'))
+          toast.error('Error saving department')
         }
       } finally {
         saving.value = false
@@ -438,19 +418,14 @@ export default {
 
     const toggleDepartmentStatus = async (department, isActive) => {
       if (!department.id) return
-      
       loadingStatus.value[department.id] = true
       try {
         const newStatus = isActive ? 'active' : 'inactive'
-        const response = await api.patch(`/departments/${department.id}/status`, {
-          status: newStatus
-        })
+        const response = await api.patch(`/departments/${department.id}/status`, { status: newStatus })
         
         if (response.data.success) {
           const index = departments.value.findIndex(d => d.id === department.id)
-          if (index !== -1) {
-            departments.value[index].status = newStatus
-          }
+          if (index !== -1) departments.value[index].status = newStatus
           await fetchStatistics()
           toast.success(`Department is now ${newStatus}`)
         } else {
@@ -472,7 +447,6 @@ export default {
       deleting.value = true
       try {
         const response = await api.delete(`/departments/${itemToDelete.value.id}`)
-        
         if (response.data.success) {
           showDeleteModal.value = false
           itemToDelete.value = null
@@ -495,7 +469,6 @@ export default {
       form.value = { name: '', code: '', description: '', status: 'active' }
     }
 
-    // Lifecycle
     onMounted(() => {
       fetchDepartments()
       fetchStatistics()
@@ -579,6 +552,28 @@ export default {
 .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-color); }
 .search-input { width: 100%; padding: 10px 12px 10px 36px; border: 1px solid var(--gray-light); border-radius: var(--border-radius-md); transition: border-color 0.2s; }
 .search-input:focus { outline: none; border-color: var(--primary-color); }
+
+/* NEW STYLES: Skeleton specific styles from CreateHod */
+.skeleton-stat-card {
+  height: 100px;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.toolbar-skeleton {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.table-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-loading-content { display: flex; align-items: center; gap: 8px; }
 
 /* Table & Badges */
 .badge.code { 
@@ -665,34 +660,11 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   gap: var(--spacing-md);
 }
 
-.empty-state svg {
-  color: var(--gray-light);
-  margin-bottom: var(--spacing-sm);
-}
-
-.empty-state h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--dark-color);
-  margin: 0;
-}
-
-.empty-state p {
-  margin: 0;
-  font-size: 0.95rem;
-}
+.empty-state svg { color: var(--gray-light); margin-bottom: var(--spacing-sm); }
+.empty-state h3 { font-size: 1.25rem; font-weight: 600; color: var(--dark-color); margin: 0; }
+.empty-state p { margin: 0; font-size: 0.95rem; }
 
 .required { color: var(--danger-color); margin-left: 2px; }
-.status-toggle { padding: 8px 0; }
-
-/* Skeleton Utils */
-.skeleton-table { display: flex; flex-direction: column; gap: 1rem; }
-.skeleton-header { padding: 8px 0; border-bottom: 1px solid var(--gray-light); }
-.skeleton-rows { display: flex; flex-direction: column; gap: 0; }
-.skeleton-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--gray-light); gap: 10px; }
-.s-cell { display: flex; align-items: center; gap: 10px; }
-.mb-1 { margin-bottom: 4px; }
-.ml-2 { margin-left: 8px; }
 
 /* Responsive */
 @media (max-width: 768px) {

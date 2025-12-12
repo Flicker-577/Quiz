@@ -8,23 +8,31 @@
       </div>
       <div class="header-actions">
         <AppButton variant="outline" @click="refreshData" :disabled="loading">
-          <span class="icon-wrapper">
-            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg>
+          <span v-if="loading" class="btn-loading-content">
+             <AppSpinner size="sm" color="dark" /> Refreshing...
           </span>
-          Refresh
+          <span v-else class="icon-wrapper">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path></svg>
+            Refresh
+          </span>
         </AppButton>
       </div>
     </div>
 
-    <div class="stats-row">
+    <div v-if="loading" class="stats-row">
+      <div v-for="n in 4" :key="n" class="skeleton-stat-card">
+        <AppSkeleton type="card" height="100%" borderRadius="12px" />
+      </div>
+    </div>
+
+    <div v-else class="stats-row">
       <div class="stat-card">
         <div class="stat-icon primary">
           <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
         </div>
         <div class="stat-info">
           <span class="label">Total Students</span>
-          <span v-if="!loading" class="value">{{ stats.totalStudents }}</span>
-          <AppSkeleton v-else width="40px" height="28px" />
+          <span class="value">{{ stats.totalStudents }}</span>
           <span v-if="stats.pendingApprovals > 0" class="trend warning">
             {{ stats.pendingApprovals }} pending
           </span>
@@ -37,8 +45,7 @@
         </div>
         <div class="stat-info">
           <span class="label">Lecturers</span>
-          <span v-if="!loading" class="value">{{ stats.totalLecturers }}</span>
-          <AppSkeleton v-else width="40px" height="28px" />
+          <span class="value">{{ stats.totalLecturers }}</span>
           <span class="trend">{{ stats.activeLecturers }} active</span>
         </div>
       </div>
@@ -49,8 +56,7 @@
         </div>
         <div class="stat-info">
           <span class="label">Courses</span>
-          <span v-if="!loading" class="value">{{ stats.totalCourses }}</span>
-          <AppSkeleton v-else width="40px" height="28px" />
+          <span class="value">{{ stats.totalCourses }}</span>
           <span class="trend">{{ stats.activeCourses }} active</span>
         </div>
       </div>
@@ -61,15 +67,21 @@
         </div>
         <div class="stat-info">
           <span class="label">Modules</span>
-          <span v-if="!loading" class="value">{{ stats.totalModules }}</span>
-          <AppSkeleton v-else width="40px" height="28px" />
+          <span class="value">{{ stats.totalModules }}</span>
           <span class="trend">{{ stats.activeModules }} active</span>
         </div>
       </div>
     </div>
 
     <h2 class="section-title">Quick Management</h2>
-    <div class="grid-3">
+    
+    <div v-if="loading" class="grid-3">
+       <div v-for="n in 3" :key="n" class="skeleton-action-card">
+          <AppSkeleton width="100%" height="100%" borderRadius="12px" />
+       </div>
+    </div>
+
+    <div v-else class="grid-3">
       <div class="action-card" @click="$router.push('/hod/courses')">
         <div class="action-icon primary">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
@@ -112,7 +124,7 @@
         </div>
         
         <div v-if="loading" class="skeleton-list">
-           <AppSkeleton v-for="n in 3" :key="n" width="100%" height="60px" class="mb-2" />
+           <AppSkeleton v-for="n in 3" :key="n" width="100%" height="60px" class="mb-2" borderRadius="8px" />
         </div>
         
         <div v-else class="approval-list">
@@ -130,10 +142,10 @@
               </button>
             </div>
           </div>
-          <div v-if="pendingApprovals.length === 0" class="empty-state">
+          <div v-if="pendingApprovals.length === 0" class="empty-state small">
             <svg viewBox="0 0 24 24" width="40" height="40" stroke="currentColor" fill="none" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
             <p>All caught up!</p>
-            <span>No pending student approvals.</span>
+            <span>No pending approvals.</span>
           </div>
         </div>
       </div>
@@ -148,7 +160,7 @@
         </div>
         
         <div v-if="loading" class="skeleton-list">
-           <AppSkeleton v-for="n in 3" :key="n" width="100%" height="60px" class="mb-2" />
+           <AppSkeleton v-for="n in 3" :key="n" width="100%" height="60px" class="mb-2" borderRadius="8px" />
         </div>
 
         <div v-else class="staff-list">
@@ -165,7 +177,7 @@
               <span class="status-dot" :class="lecturer.status" :title="lecturer.status"></span>
             </div>
           </div>
-          <div v-if="departmentLecturers.length === 0" class="empty-state">
+          <div v-if="departmentLecturers.length === 0" class="empty-state small">
              <p>No lecturers found.</p>
           </div>
         </div>
@@ -178,7 +190,7 @@
         </div>
 
         <div v-if="loading" class="skeleton-list">
-           <AppSkeleton v-for="n in 3" :key="n" width="100%" height="60px" class="mb-2" />
+           <AppSkeleton v-for="n in 3" :key="n" width="100%" height="60px" class="mb-2" borderRadius="8px" />
         </div>
 
         <div v-else class="activity-list">
@@ -194,7 +206,7 @@
             </div>
           </div>
 
-          <div v-if="recentActivities.length === 0" class="empty-state">
+          <div v-if="recentActivities.length === 0" class="empty-state small">
              <p>No recent activity.</p>
           </div>
         </div>
@@ -207,11 +219,12 @@
 import { ref, onMounted } from 'vue'
 import AppButton from '../../components/reusable/AppButton.vue'
 import AppSkeleton from '../../components/reusable/AppSkeleton.vue'
+import AppSpinner from '../../components/reusable/AppSpinner.vue'
 import api from '@/api/api'
 
 export default {
   name: 'HodDashboard',
-  components: { AppButton, AppSkeleton },
+  components: { AppButton, AppSkeleton, AppSpinner },
   setup() {
     const loading = ref(true)
     const departmentName = ref('')
@@ -251,7 +264,8 @@ export default {
       } catch (error) {
         console.error('Failed to load dashboard:', error)
       } finally {
-        loading.value = false
+        // Delay for visual smoothness
+        setTimeout(() => loading.value = false, 500)
       }
     }
 
@@ -294,6 +308,7 @@ export default {
 </script>
 
 <style scoped>
+/* Page Layout */
 .hod-dashboard { max-width: 1400px; margin: 0 auto; padding: var(--spacing-md); }
 
 /* Header */
@@ -302,7 +317,7 @@ export default {
 .title-decoration { width: 60px; height: 4px; background: var(--gradient-primary); border-radius: 2px; }
 .page-subtitle { color: var(--gray-color); }
 .header-actions { display: flex; gap: var(--spacing-sm); }
-.icon-wrapper { margin-right: 8px; display: flex; align-items: center; }
+.icon-wrapper { margin-right: 8px; display: flex; align-items: center; gap: 6px; }
 
 /* Statistics */
 .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-xl); }
@@ -318,6 +333,24 @@ export default {
 .stat-info .value { font-size: 1.75rem; font-weight: 700; color: var(--dark-color); line-height: 1.2; margin-bottom: 2px; }
 .trend { font-size: 0.75rem; font-weight: 500; color: var(--gray-color); }
 .trend.warning { color: var(--warning-color); font-weight: 600; }
+
+/* NEW SKELETON STYLES */
+.skeleton-stat-card {
+  height: 100px;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--gray-light);
+}
+.skeleton-action-card {
+  height: 140px;
+  background: white;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--gray-light);
+}
+.mb-2 { margin-bottom: 8px; }
+.btn-loading-content { display: flex; align-items: center; gap: 8px; }
 
 /* Section Title */
 .section-title { font-size: 1.2rem; font-weight: 600; color: var(--dark-color); margin-bottom: var(--spacing-md); }
@@ -387,6 +420,7 @@ export default {
 .empty-state svg { color: var(--gray-light); margin-bottom: 10px; }
 .empty-state p { font-weight: 600; color: var(--dark-color); margin-bottom: 2px; }
 .empty-state span { font-size: 0.85rem; }
+.empty-state.small { padding: 1.5rem; }
 
 /* Avatar Colors */
 .bg-blue { background: #e0e7ff; color: #4338ca; }

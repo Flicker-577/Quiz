@@ -84,6 +84,7 @@ export const useStudentQuizStore = defineStore('studentQuiz', () => {
       if (timeRemaining.value > 0) {
         timeRemaining.value--;
       } else {
+        // DEV MODE: Optional - comment this out if you also want to ignore time limits
         completeQuiz('Time Expired');
       }
     }, 1000);
@@ -132,23 +133,37 @@ export const useStudentQuizStore = defineStore('studentQuiz', () => {
 
   // 1. Tab Switch / Minimize
   function handleVisibilityChange() {
-    if (document.hidden && status.value === 'running') completeQuiz('Tab Switch/Minimize');
+    // DEV MODE: Commented out to prevent auto-submit
+     if (document.hidden && status.value === 'running') completeQuiz('Tab Switch/Minimize');
+    if (document.hidden && status.value === 'running') {
+        console.warn('DEV MODE: Tab switch detected - Auto-submit suppressed.');
+    }
   }
 
-  // 2. Window Blur (Clicking outside)
+  // 2. Window Blur (Clicking outside / Switching to VS Code)
   function handleWindowBlur() {
-    if (status.value === 'running') completeQuiz('Focus Lost');
+    // DEV MODE: Commented out to prevent auto-submit
+     if (status.value === 'running') completeQuiz('Focus Lost');
+    if (status.value === 'running') {
+        console.warn('DEV MODE: Focus lost - Auto-submit suppressed.');
+    }
   }
 
-  // 3. Fullscreen Exit Detection (ESC Key)
+  // 3. Fullscreen Exit Detection (ESC key)
   function handleFullscreenChange() {
     const isFullscreen = document.fullscreenElement || 
                          document.webkitFullscreenElement || 
                          document.mozFullScreenElement || 
                          document.msFullscreenElement;
 
+    // DEV MODE: Commented out to prevent auto-submit
+  
     if (status.value === 'running' && !isFullscreen) {
       completeQuiz('Exited Fullscreen');
+    }
+    
+    if (status.value === 'running' && !isFullscreen) {
+        console.warn('DEV MODE: Fullscreen exited - Auto-submit suppressed.');
     }
   }
 

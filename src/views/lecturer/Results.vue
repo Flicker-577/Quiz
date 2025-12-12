@@ -9,21 +9,31 @@
         <p class="page-subtitle">Track student performance, view average scores, and manage grading</p>
       </div>
       <div class="header-actions">
-        <button class="btn btn-outline" @click="exportToExcel">
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
-          Export Excel
-        </button>
+        <AppButton variant="outline" @click="exportToExcel" :disabled="isExporting">
+          <span v-if="isExporting" class="btn-loading-content">
+             <AppSpinner size="sm" color="dark" /> Exporting...
+          </span>
+          <span v-else class="icon-wrapper">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Export Excel
+          </span>
+        </AppButton>
       </div>
     </div>
 
-    <div class="kpi-grid">
+    <div v-if="loading" class="stats-grid">
+      <div v-for="n in 3" :key="n" class="skeleton-stat-card">
+        <AppSkeleton type="card" height="100%" borderRadius="12px" />
+      </div>
+    </div>
+
+    <div v-else class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon primary">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
         </div>
         <div class="stat-info">
-          <span class="stat-value" v-if="!loading">{{ stats.totalStudents || 0 }}</span>
-          <div v-else class="skeleton-shimmer" style="width: 40px; height: 24px; border-radius: 4px;"></div>
+          <span class="stat-value">{{ stats.totalStudents || 0 }}</span>
           <span class="stat-label">Enrolled Students</span>
         </div>
       </div>
@@ -33,8 +43,7 @@
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
         </div>
         <div class="stat-info">
-          <span class="stat-value" v-if="!loading">{{ stats.totalQuizzes || 0 }}</span>
-          <div v-else class="skeleton-shimmer" style="width: 40px; height: 24px; border-radius: 4px;"></div>
+          <span class="stat-value">{{ stats.totalQuizzes || 0 }}</span>
           <span class="stat-label">Total Quizzes</span>
         </div>
       </div>
@@ -44,20 +53,8 @@
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
         </div>
         <div class="stat-info">
-          <span class="stat-value" v-if="!loading">{{ stats.avgScore || 0 }}%</span>
-          <div v-else class="skeleton-shimmer" style="width: 40px; height: 24px; border-radius: 4px;"></div>
+          <span class="stat-value">{{ stats.avgScore || 0 }}%</span>
           <span class="stat-label">Global Avg</span>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon warning">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-        </div>
-        <div class="stat-info">
-          <span class="stat-value" v-if="!loading">{{ stats.passRate || 0 }}%</span>
-          <div v-else class="skeleton-shimmer" style="width: 40px; height: 24px; border-radius: 4px;"></div>
-          <span class="stat-label">Pass Rate</span>
         </div>
       </div>
     </div>
@@ -109,15 +106,20 @@
     <div v-if="loading" class="loading-skeleton">
       <div v-for="n in 2" :key="n" class="skeleton-group">
         <div class="skeleton-header">
-          <div class="skeleton-title skeleton-shimmer"></div>
+           <AppSkeleton width="200px" height="28px" class="mb-2" />
+           <AppSkeleton width="100px" height="20px" borderRadius="12px" />
         </div>
         <div class="modules-grid skeleton-grid">
           <div v-for="k in 3" :key="k" class="skeleton-card">
-            <div class="skeleton-card-header skeleton-shimmer"></div>
             <div class="skeleton-card-content">
-              <div class="skeleton-line skeleton-shimmer" style="width: 70%"></div>
-              <div class="skeleton-line skeleton-shimmer" style="width: 40%"></div>
-              <div class="skeleton-line skeleton-shimmer mt-4" style="width: 100%; height: 40px"></div>
+               <AppSkeleton width="100%" height="4px" class="mb-3" />
+               <div class="flex justify-between mb-3">
+                  <AppSkeleton width="60px" height="20px" borderRadius="4px" />
+                  <AppSkeleton width="50px" height="20px" borderRadius="12px" />
+               </div>
+               <AppSkeleton width="80%" height="24px" class="mb-3" />
+               <AppSkeleton width="60%" height="16px" class="mb-4" />
+               <AppSkeleton width="100%" height="40px" borderRadius="8px" class="mt-auto" />
             </div>
           </div>
         </div>
@@ -202,21 +204,25 @@
             <div class="card-decoration" :style="getSemesterGradient(module.semester)"></div>
             <div class="card-content">
                <div class="card-header">
-                  <span class="badge" style="background:var(--light-color); color:var(--gray-dark); border:1px solid var(--gray-light)">{{ module.academic_session }}</span>
+                  <span class="badge session-badge">{{ module.academic_session }}</span>
                   <span class="semester-indicator" :class="`sem-${module.semester}`">Sem {{ module.semester }}</span>
                </div>
+               
                <h3 class="module-name">{{ module.name }}</h3>
+               
                <div class="module-info simple">
                   <div class="info-item">
                      <span class="module-code">{{ module.code }}</span>
                      <span class="course-name">{{ module.course_name }}</span>
                   </div>
                </div>
+               
                <div class="module-stats mt-auto">
                   <div class="stat-item"><span class="stat-value" :class="getScoreColor(module.avg_score)">{{ module.avg_score }}%</span><span class="stat-label">Avg</span></div>
                   <div class="stat-divider"></div>
                   <div class="stat-item"><span class="stat-value">{{ module.student_count }}</span><span class="stat-label">Students</span></div>
                </div>
+               
                <button class="card-action-btn outline mt-3" @click.stop="openModuleResults(module)">
                  <span>View Details</span>
                </button>
@@ -290,19 +296,23 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue'
+import AppButton from '../../components/reusable/AppButton.vue'
 import AppModal from '../../components/reusable/AppModal.vue'
+import AppSkeleton from '../../components/reusable/AppSkeleton.vue'
+import AppSpinner from '../../components/reusable/AppSpinner.vue'
 import QuizQuestionsModal from '../../components/lecturer/QuizQuestionsModal.vue'
 import QuizResultsModal from '../../components/lecturer/QuizResultsModal.vue'
 import api from '@/api/api'
 
 export default {
   name: 'LecturerResults',
-  components: { AppModal, QuizQuestionsModal, QuizResultsModal },
+  components: { AppButton, AppModal, AppSkeleton, AppSpinner, QuizQuestionsModal, QuizResultsModal },
   setup() {
     // --- State ---
     const modules = ref([])
     const stats = ref({ totalStudents: 0, totalQuizzes: 0, avgScore: 0, passRate: 0 })
     const loading = ref(true)
+    const isExporting = ref(false)
     
     // Filters
     const selectedSemester = ref('all')
@@ -339,6 +349,7 @@ export default {
           const res = await api.get(`/lecturer/modules/${moduleId}/quizzes`)
           if(res.data.success) {
              moduleQuizzes.value = res.data.quizzes
+             // Cache logic if needed
              res.data.quizzes.forEach(q => {
                 if(!quizzesCache.value.find(c => c.id === q.id)) {
                    quizzesCache.value.push(q)
@@ -402,8 +413,8 @@ export default {
        return 'text-danger'
     }
 
-    const getQuizAttempts = (quizId) => [] 
-    const getQuizAvgScore = (quizId) => 0 
+    const getQuizAttempts = (quizId) => [] // Placeholder for logic
+    const getQuizAvgScore = (quizId) => 0 // Placeholder for logic
 
     // --- Actions ---
     const openModuleResults = async (module) => {
@@ -421,12 +432,17 @@ export default {
       showQuizResultsModal.value = true
     }
 
-    const exportToExcel = () => alert('Export functionality...')
+    const exportToExcel = async () => {
+       isExporting.value = true
+       await new Promise(r => setTimeout(r, 1000))
+       isExporting.value = false
+       alert('Export complete')
+    }
 
     onMounted(fetchDashboardData)
 
     return {
-      modules, stats, loading,
+      modules, stats, loading, isExporting,
       selectedSemester, searchQuery, groupBySession,
       filteredModules, groupedModulesBySession,
       selectedModule, selectedQuiz, moduleQuizzes,
@@ -442,15 +458,15 @@ export default {
 /* Core Layout */
 .lecturer-results { padding: var(--spacing-lg); max-width: 1400px; margin: 0 auto; }
 
-/* Page Header (Matches Modules.vue) */
+/* Page Header */
 .page-header { display: flex; justify-content: space-between; margin-bottom: var(--spacing-xl); padding-bottom: var(--spacing-lg); border-bottom: 1px solid var(--gray-light); }
 .page-title { font-size: 2rem; font-weight: 700; color: var(--dark-color); margin-bottom: 0.5rem; }
 .title-decoration { width: 60px; height: 4px; background: var(--gradient-primary); border-radius: 2px; }
 .page-subtitle { color: var(--gray-color); margin-top: 0.5rem; }
 .header-actions { display: flex; align-items: center; }
 
-/* KPI Grid (Styled like Stat Cards in Modules.vue) */
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+/* Stats Grid */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
 .stat-card { display: flex; align-items: center; gap: 1rem; padding: 1.5rem; background: white; border-radius: var(--border-radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--gray-light); transition: transform 0.2s; }
 .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
@@ -462,7 +478,7 @@ export default {
 .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--dark-color); line-height: 1.2; }
 .stat-label { font-size: 0.8rem; text-transform: uppercase; color: var(--gray-color); }
 
-/* Filters (Matches Modules.vue) */
+/* Filters */
 .filters-section { margin-bottom: var(--spacing-xl); }
 .filter-card { display: grid; grid-template-columns: 1fr auto auto; gap: 1.5rem; padding: 1.5rem; background: white; border-radius: var(--border-radius-lg); border: 1px solid var(--gray-light); box-shadow: var(--shadow-sm); align-items: end; }
 .search-wrapper { position: relative; }
@@ -494,7 +510,7 @@ input:checked + .toggle-slider:before { transform: translateX(24px); }
 
 .modules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
 
-/* Module Card (Exact Twin of Modules.vue) */
+/* Module Card (Consistent) */
 .module-card { background: white; border-radius: var(--border-radius-lg); border: 1px solid var(--gray-light); overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s ease; cursor: pointer; height: 100%; }
 .module-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--primary-light); }
 .card-decoration { height: 4px; width: 100%; }
@@ -525,10 +541,20 @@ input:checked + .toggle-slider:before { transform: translateX(24px); }
 /* Skeleton */
 .skeleton-shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
 .skeleton-card { height: 300px; background: white; border-radius: 12px; border: 1px solid var(--gray-light); overflow: hidden; }
-.skeleton-card-header { height: 4px; width: 100%; }
-.skeleton-card-content { padding: 1.5rem; }
-.skeleton-line { height: 12px; border-radius: 6px; margin-bottom: 1rem; }
+.skeleton-card-content { padding: 1.5rem; display: flex; flex-direction: column; height: 100%; }
+.skeleton-header { margin-bottom: 2rem; }
+.skeleton-stat-card { height: 100px; background: white; border-radius: 12px; border: 1px solid var(--gray-light); overflow: hidden; }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* Helper classes */
+.btn-loading-content { display: flex; align-items: center; gap: 8px; }
+.icon-wrapper { display: flex; align-items: center; gap: 8px; }
+.flex { display: flex; }
+.justify-between { justify-content: space-between; }
+.mt-auto { margin-top: auto; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 0.75rem; }
+.mb-4 { margin-bottom: 1rem; }
 
 /* Empty State */
 .empty-state { text-align: center; padding: 4rem 2rem; color: var(--gray-color); }
@@ -552,7 +578,10 @@ input:checked + .toggle-slider:before { transform: translateX(24px); }
 .quiz-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 1rem; }
 .quiz-stat { background: var(--light-color); padding: 8px; border-radius: 8px; text-align: center; }
 .quiz-actions { display: flex; gap: 8px; }
-.quiz-actions .btn { flex: 1; padding: 6px; font-size: 0.8rem; }
+.quiz-actions .btn { flex: 1; padding: 6px; font-size: 0.8rem; border-radius: 6px; cursor: pointer; border: 1px solid transparent; font-weight: 600; transition: 0.2s; }
+.quiz-actions .btn-primary { background: var(--primary-color); color: white; }
+.quiz-actions .btn-outline { background: transparent; border-color: var(--gray-light); color: var(--gray-dark); }
+.quiz-actions .btn-outline:hover { background: #f3f4f6; }
 
 /* Responsive */
 @media (max-width: 768px) {

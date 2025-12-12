@@ -17,14 +17,19 @@
       </button>
     </div>
 
-    <div class="stats-row">
+    <div v-if="statsLoading" class="stats-row">
+      <div v-for="n in 3" :key="n" class="skeleton-stat-card">
+         <AppSkeleton type="card" height="100%" borderRadius="12px" />
+      </div>
+    </div>
+
+    <div v-else class="stats-row">
       <div v-for="(stat, index) in statsDisplay" :key="index" class="stat-card">
         <div :class="['stat-icon', stat.colorClass]">
           <span v-html="stat.icon"></span>
         </div>
         <div class="stat-info">
-          <span v-if="!statsLoading" class="value">{{ stat.value }}</span>
-          <AppSkeleton v-else width="40px" height="28px" class="mb-1" />
+          <span class="value">{{ stat.value }}</span>
           <span class="label">{{ stat.label }}</span>
         </div>
       </div>
@@ -36,14 +41,12 @@
           :class="['tab', { active: activeTab === 'modules' }]" 
           @click="activeTab = 'modules'"
         >
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
           All Modules
         </button>
         <button 
           :class="['tab', { active: activeTab === 'assignments' }]" 
           @click="activeTab = 'assignments'"
         >
-          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
           Course Assignments
         </button>
       </div>
@@ -74,9 +77,6 @@
         </div>
 
         <div v-else-if="modules.length === 0" class="empty-state">
-          <div class="empty-icon">
-            <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" fill="none" stroke-width="1.5"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-          </div>
           <h3>No Modules Found</h3>
           <p>Create your first module to get started.</p>
           <button class="create-btn primary" @click="openCreateModal()">Create Module</button>
@@ -106,7 +106,6 @@
 
               <div class="module-stats">
                 <div class="stat-item">
-                  <div class="stat-icon"><svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg></div>
                   <div class="stat-content">
                     <span class="stat-value">{{ module.course_assignments_count || 0 }}</span>
                     <span class="stat-label">Courses</span>
@@ -157,9 +156,6 @@
         </div>
 
         <div v-else-if="assignments.length === 0" class="empty-state">
-           <div class="empty-icon">
-            <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" fill="none" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
-          </div>
           <h3>No Assignments Found</h3>
           <p>Assign modules to courses to get started.</p>
         </div>
@@ -174,7 +170,7 @@
                   <span class="semester-badge">S{{ assignment.semester }}</span>
                 </div>
                 <div class="assignment-actions">
-                  <button class="icon-btn" title="Reassign Lecturer" @click="openReassignModal(assignment)">
+                  <button class="icon-btn" title="Reassign" @click="openReassignModal(assignment)">
                     <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                   </button>
                   <button class="icon-btn danger" title="Remove" @click="initiateRemoveAssignment(assignment)">
@@ -187,12 +183,10 @@
                 <label>Module</label>
                 <div><strong>{{ assignment.module?.code }}</strong> - {{ assignment.module?.name }}</div>
               </div>
-              
               <div class="info-group">
                 <label>Course</label>
                 <div><strong>{{ assignment.course?.code }}</strong> - {{ assignment.course?.name }}</div>
               </div>
-
               <div class="info-group">
                 <label>Lecturer</label>
                 <div v-if="assignment.lecturer" class="lecturer-chip">
@@ -204,7 +198,6 @@
             </div>
           </div>
         </div>
-
         <AppPagination :meta="assignmentsPaginator" @change="fetchAssignments" />
       </div>
     </div>
@@ -235,81 +228,75 @@
         <div class="modal-actions">
           <button type="button" class="btn outline" @click="closeModuleModal" :disabled="moduleLoading">Cancel</button>
           <button type="submit" class="btn primary" :disabled="moduleLoading">
-             <span v-if="moduleLoading" class="spinner-small"></span> {{ editingModule ? 'Save Changes' : 'Create Module' }}
+             <span v-if="moduleLoading" class="btn-loading-content"><AppSpinner size="sm" color="light" /> Saving...</span>
+             <span v-else>{{ editingModule ? 'Save Changes' : 'Create Module' }}</span>
           </button>
         </div>
       </form>
     </AppModal>
 
-    <AppModal :show="showDetailsModal" title="Module Assignments" width="650px" @close="closeDetailsModal">
-      <div v-if="detailsLoading" class="p-3">
-        <AppSkeleton width="100%" height="150px" />
-      </div>
-      <div v-else-if="selectedModuleDetails">
-        <div class="details-header mb-4">
-          <h2>{{ selectedModuleDetails.code }} - {{ selectedModuleDetails.name }}</h2>
-          <p class="text-muted">{{ selectedModuleDetails.description }}</p>
-        </div>
-
-        <h4 class="section-title">Assigned Lecturers & Courses</h4>
+    <AppModal :show="showAssignmentModal" :title="`Assign: ${selectedModule?.code}`" width="550px" @close="closeAssignmentModal">
+      <div v-if="assignmentError" class="modal-error">{{ assignmentError }}</div>
+      <form @submit.prevent="assignModuleToCourse" class="modal-form">
         
-        <div v-if="selectedModuleDetails.course_assignments && selectedModuleDetails.course_assignments.length > 0" class="assignments-list">
-          <div v-for="assign in selectedModuleDetails.course_assignments" :key="assign.id" class="detail-item">
-            <div class="detail-left">
-              <div class="course-info">
-                <span class="badge-blue">{{ assign.course.code }}</span>
-                <span class="course-name">{{ assign.course.name }}</span>
-              </div>
-              <div class="academic-info">
-                 Year {{ assign.year }} | Semester {{ assign.semester }}
-              </div>
+        <div class="form-group dropdown-container" ref="sessionDropdownRef">
+          <label class="form-label">Academic Session *</label>
+          <div class="custom-select" @click="toggleDropdown('session')" :class="{ active: dropdowns.session.open }">
+            <div class="selected-text">{{ getSessionLabel(assignmentForm.academic_session_id) || 'Select Session' }}</div>
+            <span class="arrow">▼</span>
+          </div>
+          <div v-if="dropdowns.session.open" class="dropdown-menu">
+            <div class="search-wrap">
+               <input v-model="dropdowns.session.search" placeholder="Search..." class="dd-search" @click.stop ref="sessionSearchInput">
             </div>
-            <div class="detail-right">
-              <label>Lecturer</label>
-              <div v-if="assign.lecturer" class="lecturer-pill">
-                <span class="avatar-xxs">{{ getInitials(assign.lecturer.name) }}</span>
-                {{ assign.lecturer.name }}
-              </div>
-              <div v-else class="unassigned-pill">Unassigned</div>
+            <div class="options-list">
+               <div v-for="sess in filteredSessions" :key="sess.id" class="option-item" @click="selectItem('session', sess.id)">
+                  {{ sess.name }} <span v-if="sess.is_current" class="badge-mini">Current</span>
+               </div>
+               <div v-if="filteredSessions.length === 0" class="no-results">No results</div>
             </div>
           </div>
         </div>
-        <div v-else class="empty-details">
-          <p>No courses assigned to this module yet.</p>
-        </div>
-      </div>
-    </AppModal>
 
-    <AppModal :show="showAssignmentModal" :title="`Assign: ${selectedModule?.code}`" width="500px" @close="closeAssignmentModal">
-      <div v-if="assignmentError" class="modal-error">{{ assignmentError }}</div>
-      <form @submit.prevent="assignModuleToCourse" class="modal-form">
-        <div class="form-group">
-          <label class="form-label">Academic Session *</label>
-          <select v-model="assignmentForm.academic_session_id" class="form-control" required>
-            <option value="">Select Session</option>
-            <option v-for="session in academicSessions" :key="session.id" :value="session.id">
-              {{ session.name }} {{ session.is_current ? '(Current)' : '' }}
-            </option>
-          </select>
-        </div>
-        <div class="form-group">
+        <div class="form-group dropdown-container" ref="courseDropdownRef">
           <label class="form-label">Course *</label>
-          <select v-model="assignmentForm.course_id" class="form-control" required>
-            <option value="">Select Course</option>
-            <option v-for="course in availableCourses" :key="course.id" :value="course.id">
-              {{ course.code }} - {{ course.name }}
-            </option>
-          </select>
+          <div class="custom-select" @click="toggleDropdown('course')" :class="{ active: dropdowns.course.open }">
+            <div class="selected-text">{{ getCourseLabel(assignmentForm.course_id) || 'Select Course' }}</div>
+            <span class="arrow">▼</span>
+          </div>
+          <div v-if="dropdowns.course.open" class="dropdown-menu">
+            <div class="search-wrap">
+               <input v-model="dropdowns.course.search" placeholder="Search..." class="dd-search" @click.stop ref="courseSearchInput">
+            </div>
+            <div class="options-list">
+               <div v-for="course in filteredCourses" :key="course.id" class="option-item" @click="selectItem('course', course.id)">
+                  <span class="opt-code">{{ course.code }}</span> {{ course.name }}
+               </div>
+               <div v-if="filteredCourses.length === 0" class="no-results">No results</div>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
+
+        <div class="form-group dropdown-container" ref="lecturerDropdownRef">
           <label class="form-label">Lecturer (Optional)</label>
-          <select v-model="assignmentForm.lecturer_id" class="form-control">
-            <option value="">Unassigned</option>
-            <option v-for="lecturer in departmentLecturers" :key="lecturer.id" :value="lecturer.id">
-              {{ lecturer.name }}
-            </option>
-          </select>
+          <div class="custom-select" @click="toggleDropdown('lecturer')" :class="{ active: dropdowns.lecturer.open }">
+            <div class="selected-text">{{ getLecturerLabel(assignmentForm.lecturer_id) || 'Unassigned' }}</div>
+            <span class="arrow">▼</span>
+          </div>
+          <div v-if="dropdowns.lecturer.open" class="dropdown-menu">
+            <div class="search-wrap">
+               <input v-model="dropdowns.lecturer.search" placeholder="Search..." class="dd-search" @click.stop ref="lecturerSearchInput">
+            </div>
+            <div class="options-list">
+               <div class="option-item" @click="selectItem('lecturer', '')">Unassigned</div>
+               <div v-for="lect in filteredLecturers" :key="lect.id" class="option-item" @click="selectItem('lecturer', lect.id)">
+                  {{ lect.name }}
+               </div>
+               <div v-if="filteredLecturers.length === 0" class="no-results">No results</div>
+            </div>
+          </div>
         </div>
+
         <div class="grid-2">
           <div class="form-group">
             <label class="form-label">Year *</label>
@@ -328,7 +315,8 @@
         <div class="modal-actions">
           <button type="button" class="btn outline" @click="closeAssignmentModal" :disabled="assignmentLoading">Cancel</button>
           <button type="submit" class="btn primary" :disabled="assignmentLoading">
-            <span v-if="assignmentLoading" class="spinner-small"></span> Assign
+            <span v-if="assignmentLoading" class="btn-loading-content"><AppSpinner size="sm" color="light" /> Assigning...</span>
+            <span v-else>Assign</span>
           </button>
         </div>
       </form>
@@ -337,26 +325,35 @@
     <AppModal :show="showReassignModal" title="Reassign Lecturer" width="400px" @close="closeReassignModal">
       <div v-if="reassignError" class="modal-error">{{ reassignError }}</div>
       <form @submit.prevent="reassignLecturer" class="modal-form">
-        <div class="form-group">
+        <div class="form-group dropdown-container" ref="reassignDropdownRef">
           <label class="form-label">Select New Lecturer</label>
-          <select v-model="reassignForm.lecturer_id" class="form-control" required>
-            <option value="">Unassigned</option>
-            <option v-for="lecturer in departmentLecturers" :key="lecturer.id" :value="lecturer.id">
-              {{ lecturer.name }}
-            </option>
-          </select>
+          <div class="custom-select" @click="toggleDropdown('reassign')" :class="{ active: dropdowns.reassign.open }">
+            <div class="selected-text">{{ getLecturerLabel(reassignForm.lecturer_id) || 'Unassigned' }}</div>
+            <span class="arrow">▼</span>
+          </div>
+          <div v-if="dropdowns.reassign.open" class="dropdown-menu">
+            <div class="search-wrap">
+               <input v-model="dropdowns.reassign.search" placeholder="Search..." class="dd-search" @click.stop ref="reassignSearchInput">
+            </div>
+            <div class="options-list">
+               <div class="option-item" @click="selectReassignItem('')">Unassigned</div>
+               <div v-for="lect in filteredReassignLecturers" :key="lect.id" class="option-item" @click="selectReassignItem(lect.id)">
+                  {{ lect.name }}
+               </div>
+            </div>
+          </div>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn outline" @click="closeReassignModal">Cancel</button>
           <button type="submit" class="btn primary" :disabled="reassignLoading">
-             <span v-if="reassignLoading" class="spinner-small"></span> Save
+             <span v-if="reassignLoading" class="btn-loading-content"><AppSpinner size="sm" color="light" /> Saving...</span>
+             <span v-else>Save</span>
           </button>
         </div>
       </form>
     </AppModal>
 
     <AppModal :show="showDeleteModal" :title="deleteTitle" width="450px" @close="showDeleteModal = false">
-      <div v-if="deleteError" class="modal-error mb-3">{{ deleteError }}</div>
       <div class="confirmation-content">
         <h3>Are you sure?</h3>
         <p v-html="deleteMessage"></p>
@@ -365,7 +362,8 @@
         <div class="modal-actions centered">
           <button class="btn outline" @click="showDeleteModal = false">Cancel</button>
           <button class="btn danger" @click="executeDelete" :disabled="deleteLoading">
-            <span v-if="deleteLoading" class="spinner-small"></span> {{ deleteConfirmText }}
+            <span v-if="deleteLoading" class="btn-loading-content"><AppSpinner size="sm" color="light" /> Processing...</span>
+            <span v-else>{{ deleteConfirmText }}</span>
           </button>
         </div>
       </template>
@@ -375,31 +373,29 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import AppModal from '../../components/reusable/AppModal.vue'
 import AppSkeleton from '../../components/reusable/AppSkeleton.vue'
 import AppPagination from '../../components/reusable/AppPagination.vue'
+import AppSpinner from '../../components/reusable/AppSpinner.vue'
 import api from '@/api/api'
 
 export default {
   name: 'HodModules',
-  components: { AppModal, AppSkeleton, AppPagination },
+  components: { AppModal, AppSkeleton, AppPagination, AppSpinner },
   setup() {
-    const router = useRouter()
-
     // --- State ---
     const activeTab = ref('modules')
     const statsLoading = ref(true)
     const stats = ref({})
-
-    // Modules
+    
+    // Modules State
     const modules = ref([])
     const modulesLoading = ref(true)
     const modulesSearch = ref('')
     const modulesPaginator = ref({})
 
-    // Assignments
+    // Assignments State
     const assignments = ref([])
     const assignmentsLoading = ref(true)
     const assignmentsSearch = ref('')
@@ -407,7 +403,7 @@ export default {
     const assignmentsSemester = ref('')
     const assignmentsPaginator = ref({})
 
-    // Dropdowns
+    // Data Lists
     const availableCourses = ref([])
     const departmentLecturers = ref([])
     const availableYears = ref([])
@@ -415,27 +411,22 @@ export default {
 
     // Forms
     const moduleForm = ref({ name: '', code: '', credits: 10, description: '' })
-    const assignmentForm = ref({ 
-       module_id: '', course_id: '', lecturer_id: '', 
-       academic_session_id: '', year: 1, semester: '1' 
-    })
+    const assignmentForm = ref({ module_id: '', course_id: '', lecturer_id: '', academic_session_id: '', year: 1, semester: '1' })
     const reassignForm = ref({ lecturer_id: '' })
 
-    // Modals & Loaders
+    // Modals
     const showModuleModal = ref(false)
     const showAssignmentModal = ref(false)
     const showReassignModal = ref(false)
     const showDeleteModal = ref(false)
-    
-    // NEW: Details Modal
     const showDetailsModal = ref(false)
-    const detailsLoading = ref(false)
     
+    // Loaders & Errors
+    const detailsLoading = ref(false)
     const moduleLoading = ref(false)
     const assignmentLoading = ref(false)
     const reassignLoading = ref(false)
     const deleteLoading = ref(false)
-    
     const moduleError = ref('')
     const assignmentError = ref('')
     const reassignError = ref('')
@@ -445,45 +436,105 @@ export default {
     const editingModule = ref(null)
     const selectedModule = ref(null)
     const selectedAssignment = ref(null)
-    // NEW: Selected Module for Details
     const selectedModuleDetails = ref(null) 
-
     const itemToDelete = ref(null)
     const deleteType = ref('')
 
+    // --- Dropdown Management ---
+    const dropdowns = reactive({
+      session: { open: false, search: '' },
+      course: { open: false, search: '' },
+      lecturer: { open: false, search: '' },
+      reassign: { open: false, search: '' }
+    })
+    
+    const sessionDropdownRef = ref(null)
+    const courseDropdownRef = ref(null)
+    const lecturerDropdownRef = ref(null)
+    const reassignDropdownRef = ref(null)
+    const sessionSearchInput = ref(null)
+    const courseSearchInput = ref(null)
+    const lecturerSearchInput = ref(null)
+    const reassignSearchInput = ref(null)
+
     // --- Computed ---
     const statsDisplay = computed(() => [
-      { 
-        label: 'Total Modules', value: stats.value.total_modules || 0, 
-        icon: '<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>',
-        colorClass: 'primary'
-      },
-      { 
-        label: 'Assigned', value: stats.value.assigned_modules || 0, 
-        icon: '<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>',
-        colorClass: 'warning'
-      },
-      { 
-        label: 'Total Credits', value: modules.value.reduce((acc, m) => acc + (m.credits || 0), 0), 
-        icon: '<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
-        colorClass: 'secondary'
-      }
+      { label: 'Total Modules', value: stats.value.total_modules || 0, icon: '<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>', colorClass: 'primary' },
+      { label: 'Assigned', value: stats.value.assigned_modules || 0, icon: '<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>', colorClass: 'warning' },
+      { label: 'Total Credits', value: modules.value.reduce((acc, m) => acc + (m.credits || 0), 0), icon: '<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>', colorClass: 'secondary' }
     ])
 
     const deleteTitle = computed(() => deleteType.value === 'module' ? 'Delete Module' : 'Remove Assignment')
     const deleteMessage = computed(() => {
       if(!itemToDelete.value) return ''
-      return deleteType.value === 'module' 
-        ? `Delete <strong>${itemToDelete.value.name}</strong>?`
-        : `Remove assignment for <strong>${itemToDelete.value.module?.code}</strong>?`
+      return deleteType.value === 'module' ? `Delete <strong>${itemToDelete.value.name}</strong>?` : `Remove assignment for <strong>${itemToDelete.value.module?.code}</strong>?`
     })
     const deleteConfirmText = computed(() => deleteType.value === 'module' ? 'Delete' : 'Remove')
+
+    // Filtered Options for Custom Selects
+    const filteredSessions = computed(() => {
+       const q = dropdowns.session.search.toLowerCase()
+       return academicSessions.value.filter(s => s.name.toLowerCase().includes(q))
+    })
+    const filteredCourses = computed(() => {
+       const q = dropdowns.course.search.toLowerCase()
+       return availableCourses.value.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
+    })
+    const filteredLecturers = computed(() => {
+       const q = dropdowns.lecturer.search.toLowerCase()
+       return departmentLecturers.value.filter(l => l.name.toLowerCase().includes(q))
+    })
+    const filteredReassignLecturers = computed(() => {
+       const q = dropdowns.reassign.search.toLowerCase()
+       return departmentLecturers.value.filter(l => l.name.toLowerCase().includes(q))
+    })
 
     // --- Methods ---
     const getInitials = (n) => n ? n.substring(0,2).toUpperCase() : 'NA'
     const getSemesterGradient = (s) => ({ background: s == 1 ? 'linear-gradient(135deg, #1E88E5, #1565C0)' : 'linear-gradient(135deg, #8E24AA, #6A1B9A)' })
 
-    // Fetching
+    // Label Getters for Custom Select
+    const getSessionLabel = (id) => academicSessions.value.find(s => s.id === id)?.name
+    const getCourseLabel = (id) => { const c = availableCourses.value.find(x => x.id === id); return c ? `${c.code} - ${c.name}` : '' }
+    const getLecturerLabel = (id) => departmentLecturers.value.find(l => l.id === id)?.name
+
+    // Custom Dropdown Logic
+    const toggleDropdown = (key) => {
+       // Close others
+       Object.keys(dropdowns).forEach(k => { if(k !== key) dropdowns[k].open = false })
+       
+       dropdowns[key].open = !dropdowns[key].open
+       if(dropdowns[key].open) {
+          dropdowns[key].search = ''
+          nextTick(() => {
+             if(key === 'session') sessionSearchInput.value?.focus()
+             if(key === 'course') courseSearchInput.value?.focus()
+             if(key === 'lecturer') lecturerSearchInput.value?.focus()
+             if(key === 'reassign') reassignSearchInput.value?.focus()
+          })
+       }
+    }
+
+    const selectItem = (type, id) => {
+       if(type === 'session') assignmentForm.value.academic_session_id = id
+       if(type === 'course') assignmentForm.value.course_id = id
+       if(type === 'lecturer') assignmentForm.value.lecturer_id = id
+       dropdowns[type].open = false
+    }
+
+    const selectReassignItem = (id) => {
+       reassignForm.value.lecturer_id = id
+       dropdowns.reassign.open = false
+    }
+
+    const closeAllDropdowns = (e) => {
+       if(sessionDropdownRef.value && !sessionDropdownRef.value.contains(e.target)) dropdowns.session.open = false
+       if(courseDropdownRef.value && !courseDropdownRef.value.contains(e.target)) dropdowns.course.open = false
+       if(lecturerDropdownRef.value && !lecturerDropdownRef.value.contains(e.target)) dropdowns.lecturer.open = false
+       if(reassignDropdownRef.value && !reassignDropdownRef.value.contains(e.target)) dropdowns.reassign.open = false
+    }
+
+    // --- API Calls ---
     const fetchStatistics = async () => {
        try {
          const res = await api.get('/hod/modules/statistics')
@@ -497,7 +548,6 @@ export default {
        try {
           const res = await api.get('/hod/modules', { params: { page, search: modulesSearch.value } })
           modules.value = res.data.modules.data
-          // Pass the entire paginator object (without data)
           modulesPaginator.value = res.data.modules
        } catch(e) { console.error(e) } 
        finally { setTimeout(() => modulesLoading.value = false, 300) } 
@@ -548,29 +598,19 @@ export default {
        finally { moduleLoading.value = false }
     }
 
-    // NEW: Open Details Modal Logic
     const openDetailsModal = async (module) => {
       selectedModuleDetails.value = null
       showDetailsModal.value = true
       detailsLoading.value = true
-      
       try {
         const res = await api.get(`/hod/modules/${module.id}`)
         selectedModuleDetails.value = res.data.module
-      } catch (error) {
-        console.error("Failed to fetch module details", error)
-      } finally {
-        detailsLoading.value = false
-      }
+      } catch (error) { console.error(error) } finally { detailsLoading.value = false }
     }
-    const closeDetailsModal = () => {
-      showDetailsModal.value = false
-      selectedModuleDetails.value = null
-    }
+    const closeDetailsModal = () => { showDetailsModal.value = false; selectedModuleDetails.value = null }
 
     const openAssignmentModal = (m) => {
        selectedModule.value = m
-       // Default to current session if available
        const currentSession = academicSessions.value.find(s => s.is_current)
        assignmentForm.value = { 
           module_id: m.id, course_id: '', lecturer_id: '', 
@@ -584,10 +624,17 @@ export default {
     const assignModuleToCourse = async () => {
        assignmentLoading.value = true
        try {
-          await api.post('/hod/modules/assign-course', assignmentForm.value)
+          // Send array of course_ids (single selected wrapped in array)
+          const payload = { ...assignmentForm.value, course_ids: [assignmentForm.value.course_id] }
+          delete payload.course_id 
+
+          await api.post('/hod/modules/assign-course', payload)
           closeAssignmentModal()
           fetchAssignments()
-       } catch(e) { assignmentError.value = e.response?.data?.message || 'Failed' }
+       } catch(e) { 
+          if(e.response?.data?.errors?.course_ids) assignmentError.value = e.response.data.errors.course_ids[0]
+          else assignmentError.value = e.response?.data?.message || 'Failed' 
+       }
        finally { assignmentLoading.value = false }
     }
 
@@ -607,26 +654,14 @@ export default {
        finally { reassignLoading.value = false }
     }
 
-    const initiateDeleteModule = (m) => {
-       itemToDelete.value = m
-       deleteType.value = 'module'
-       deleteError.value = ''
-       showDeleteModal.value = true
-    }
-
-    const initiateRemoveAssignment = (a) => {
-       itemToDelete.value = a
-       deleteType.value = 'assignment'
-       deleteError.value = ''
-       showDeleteModal.value = true
-    }
+    const initiateDeleteModule = (m) => { itemToDelete.value = m; deleteType.value = 'module'; deleteError.value = ''; showDeleteModal.value = true }
+    const initiateRemoveAssignment = (a) => { itemToDelete.value = a; deleteType.value = 'assignment'; deleteError.value = ''; showDeleteModal.value = true }
 
     const executeDelete = async () => {
        deleteLoading.value = true
        try {
           if(deleteType.value === 'module') await api.delete(`/hod/modules/${itemToDelete.value.id}`)
           else await api.delete(`/hod/modules/assignments/${itemToDelete.value.id}`)
-          
           showDeleteModal.value = false
           deleteType.value === 'module' ? fetchModules() : fetchAssignments()
        } catch(e) { deleteError.value = e.response?.data?.message || 'Failed' }
@@ -639,19 +674,18 @@ export default {
 
     // Watchers
     let debounce
-    watch(modulesSearch, () => {
-       clearTimeout(debounce)
-       debounce = setTimeout(() => fetchModules(1), 500)
-    })
-    watch(assignmentsSearch, () => {
-       clearTimeout(debounce)
-       debounce = setTimeout(() => fetchAssignments(1), 500)
-    })
+    watch(modulesSearch, () => { clearTimeout(debounce); debounce = setTimeout(() => fetchModules(1), 500) })
+    watch(assignmentsSearch, () => { clearTimeout(debounce); debounce = setTimeout(() => fetchAssignments(1), 500) })
 
     onMounted(() => {
        fetchStatistics()
        fetchModules()
        fetchAssignments()
+       document.addEventListener('click', closeAllDropdowns)
+    })
+    
+    onUnmounted(() => {
+       document.removeEventListener('click', closeAllDropdowns)
     })
 
     return {
@@ -661,26 +695,32 @@ export default {
        assignmentsYear, assignmentsSemester, availableYears, availableCourses, departmentLecturers, academicSessions,
        moduleForm, assignmentForm, reassignForm,
        showModuleModal, showAssignmentModal, showReassignModal, showDeleteModal,
-       showDetailsModal, detailsLoading, // NEW Exports
+       showDetailsModal, detailsLoading, 
        moduleLoading, assignmentLoading, reassignLoading, deleteLoading,
        moduleError, assignmentError, reassignError, deleteError,
-       editingModule, selectedModule, selectedModuleDetails, // NEW Export
+       editingModule, selectedModule, selectedModuleDetails, 
        deleteTitle, deleteMessage, deleteConfirmText,
        getInitials, getSemesterGradient,
        fetchModules, fetchAssignments,
        openCreateModal, openEditModal, saveModule,
-       openDetailsModal, closeDetailsModal, // NEW Export
+       openDetailsModal, closeDetailsModal,
        openAssignmentModal, assignModuleToCourse,
        openReassignModal, reassignLecturer,
        initiateDeleteModule, initiateRemoveAssignment, executeDelete,
-       closeModuleModal, closeAssignmentModal, closeReassignModal
+       closeModuleModal, closeAssignmentModal, closeReassignModal,
+       // Custom Select
+       dropdowns, toggleDropdown, selectItem, selectReassignItem,
+       sessionDropdownRef, courseDropdownRef, lecturerDropdownRef, reassignDropdownRef,
+       sessionSearchInput, courseSearchInput, lecturerSearchInput, reassignSearchInput,
+       filteredSessions, filteredCourses, filteredLecturers, filteredReassignLecturers,
+       getSessionLabel, getCourseLabel, getLecturerLabel
     }
   }
 }
 </script>
 
 <style scoped>
-/* Page Layout */
+/* Base Layout */
 .hod-modules { max-width: 1400px; margin: 0 auto; padding: var(--spacing-md); }
 
 /* Header */
@@ -688,7 +728,6 @@ export default {
 .page-title { font-size: 2.0rem; font-weight: 700; color: var(--dark-color); margin-bottom: 0.5rem; }
 .title-decoration { width: 60px; height: 4px; background: var(--gradient-primary); border-radius: 2px; }
 .page-subtitle { color: var(--gray-color); }
-
 .create-btn { display: flex; align-items: center; gap: 8px; padding: 10px 20px; background: var(--primary-color); color: white; border: none; border-radius: var(--border-radius-md); font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
 .create-btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
 
@@ -717,78 +756,81 @@ export default {
 .filter-group { display: flex; gap: 10px; }
 .filter-select { padding: 10px; border: 1px solid var(--gray-light); border-radius: var(--border-radius-md); min-width: 150px; background: white; }
 
-/* Grid Layouts */
+/* Grid & Cards */
 .modules-grid, .assignments-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-
-/* Cards */
 .module-card, .assignment-card { background: white; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-light); overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s; }
 .module-card:hover, .assignment-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--primary-light); }
 .card-decoration { height: 4px; width: 100%; }
 .card-decoration.primary-gradient { background: linear-gradient(135deg, #1E88E5, #1565C0); }
 .card-body { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; }
-
-/* Module Content */
 .module-header, .assignment-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
 .module-badge, .assignment-badge { display: flex; gap: 6px; }
 .module-code-badge { font-weight: 700; background: #f3f4f6; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
 .credits-badge { background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
+.year-badge, .semester-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; background: #e0e7ff; color: #4338ca; }
 .module-name { font-size: 1.15rem; font-weight: 700; color: var(--dark-color); margin: 0 0 10px 0; line-height: 1.4; }
 .module-desc-text { font-size: 0.9rem; color: #666; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 1rem; }
-.card-actions { margin-top: auto; display: flex; gap: 8px; }
-
-/* Assignment Info */
 .info-group { margin-bottom: 0.8rem; }
 .info-group label { font-size: 0.75rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px; }
-.lecturer-chip { display: flex; align-items: center; gap: 6px; }
-.avatar-xs { width: 24px; height: 24px; background: #dbeafe; color: #1e40af; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; }
-
-/* Buttons */
-.action-btn { flex: 1; padding: 8px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
-.action-btn.primary { background: var(--primary-color); color: white; }
-.action-btn.outline { border-color: var(--gray-light); background: transparent; color: #444; }
-.action-btn.outline:hover { background: #f9fafb; border-color: #ccc; }
+.card-actions { margin-top: auto; display: flex; gap: 8px; }
+.action-btn, .btn { flex: 1; padding: 8px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
+.primary, .btn.primary { background: var(--primary-color); color: white; }
+.outline, .btn.outline { border-color: var(--gray-light); background: transparent; color: #444; }
+.danger, .btn.danger { background: var(--danger-color); color: white; }
 .icon-btn { background: transparent; border: none; padding: 4px; color: #888; cursor: pointer; transition: 0.2s; border-radius: 4px; }
 .icon-btn:hover { background: #f3f4f6; color: var(--primary-color); }
 .icon-btn.danger:hover { color: var(--danger-color); }
+.lecturer-chip { display: flex; align-items: center; gap: 6px; }
+.avatar-xs { width: 24px; height: 24px; background: #dbeafe; color: #1e40af; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; }
 
-/* Modals */
-.modal-form { display: flex; flex-direction: column; gap: 1rem; }
-.form-group label { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.9rem; }
+/* Custom Searchable Dropdown Styles */
+.dropdown-container { position: relative; }
+.custom-select {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--gray-light);
+  border-radius: 8px; background: white; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.9rem; transition: border 0.2s;
+}
+.custom-select:hover, .custom-select.active { border-color: var(--primary-color); }
+.custom-select .arrow { font-size: 0.7rem; color: #999; }
+.dropdown-menu {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+  background: white; border: 1px solid var(--gray-light);
+  border-radius: 8px; margin-top: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+.search-wrap { padding: 8px; border-bottom: 1px solid var(--gray-light); }
+.dd-search {
+  width: 100%; padding: 6px 10px; border: 1px solid var(--gray-light);
+  border-radius: 4px; font-size: 0.85rem; outline: none;
+}
+.options-list { max-height: 200px; overflow-y: auto; }
+.option-item {
+  padding: 8px 12px; font-size: 0.9rem; color: var(--dark-color);
+  cursor: pointer; transition: background 0.2s;
+}
+.option-item:hover { background: #f3f4f6; color: var(--primary-color); }
+.no-results { padding: 10px; text-align: center; color: #999; font-size: 0.85rem; }
+.badge-mini { font-size: 0.7rem; background: #dcfce7; color: #166534; padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+.opt-code { font-weight: 600; color: #666; margin-right: 4px; }
+
+/* Skeleton */
+.skeleton-stat-card { height: 100px; background: white; border-radius: 12px; overflow: hidden; border: 1px solid var(--gray-light); }
+.skeleton-card { background: white; border-radius: 12px; border: 1px solid var(--gray-light); padding: 1.25rem; }
+.btn-loading-content { display: flex; align-items: center; gap: 8px; }
+.empty-state { text-align: center; padding: 3rem; color: var(--gray-color); }
+.empty-icon { color: var(--gray-light); margin-bottom: 1rem; }
+
+/* Modal specific */
+.form-group { margin-bottom: 1rem; }
+.form-label { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.9rem; }
 .form-control { width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 1.5rem; }
-.btn { padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; }
-.btn.primary { background: var(--primary-color); color: white; }
-.btn.outline { border: 1px solid #ddd; background: white; color: #333; }
-.btn.danger { background: var(--danger-color); color: white; }
-.modal-error { background: #fef2f2; color: #991b1b; padding: 10px; border-radius: 6px; border: 1px solid #fecaca; margin-bottom: 1rem; }
+.modal-error { background: #fef2f2; color: #991b1b; padding: 10px; border-radius: 6px; margin-bottom: 1rem; font-size: 0.9rem; }
 
-/* Styles for Details Modal */
-.details-header { border-bottom: 1px solid var(--gray-light); padding-bottom: 1rem; }
-.details-header h2 { margin: 0 0 5px 0; font-size: 1.5rem; color: var(--dark-color); }
-.section-title { font-size: 1rem; font-weight: 600; color: var(--gray-dark); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px; }
-.assignments-list { display: flex; flex-direction: column; gap: 10px; }
-.detail-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f9fafb; border-radius: 8px; border: 1px solid var(--gray-light); }
-.detail-left { display: flex; flex-direction: column; gap: 4px; }
-.course-info { display: flex; align-items: center; gap: 8px; }
-.badge-blue { background: #dbeafe; color: #1e40af; font-weight: 700; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; }
-.course-name { font-weight: 600; color: var(--dark-color); }
-.academic-info { font-size: 0.85rem; color: var(--gray-color); }
-.detail-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-.detail-right label { font-size: 0.7rem; color: var(--gray-color); text-transform: uppercase; }
-.lecturer-pill { display: flex; align-items: center; gap: 6px; background: white; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--gray-light); font-size: 0.9rem; font-weight: 500; }
-.avatar-xxs { width: 20px; height: 20px; background: var(--primary-color); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; }
-.unassigned-pill { background: #f3f4f6; color: #6b7280; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-style: italic; }
-.empty-details { text-align: center; color: var(--gray-color); padding: 2rem; font-style: italic; }
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
-  .page-header { flex-direction: column; align-items: flex-start; }
-  .toolbar { flex-direction: column; }
-  .search-box { max-width: 100%; }
   .modules-grid, .assignments-grid { grid-template-columns: 1fr; }
   .grid-2 { grid-template-columns: 1fr; }
-  .detail-item { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .detail-right { align-items: flex-start; width: 100%; }
 }
 </style>

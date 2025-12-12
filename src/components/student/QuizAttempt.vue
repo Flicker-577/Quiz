@@ -5,16 +5,20 @@
     <header class="quiz-header">
       <div class="header-left">
         <h2 class="quiz-title text-dark">{{ store.quiz?.title || 'Loading...' }}</h2>
-        <span class="status-badge" :class="store.isOnline ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'">
+        <!--<span class="status-badge" :class="store.isOnline ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'">
           {{ store.isOnline ? 'Online' : 'Offline' }}
         </span>
+        -->
       </div>
       <div class="header-right">
         <span class="save-status" :class="saveStatusClass">{{ store.saveStatus }}</span>
         <CountdownTimer v-if="timerTarget" :target-time="timerTarget" @finished="handleTimerFinished">
           <template #default="{ hours, minutes, seconds }">
             <div class="timer-display" :class="{ 'urgent': hours === 0 && minutes < 5 }">
-              <span>⏳ {{ String(hours).padStart(2, '0') }}:{{ String(minutes).padStart(2, '0') }}:{{ String(seconds).padStart(2, '0') }}</span>
+              <span>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                {{ String(hours).padStart(2, '0') }}:{{ String(minutes).padStart(2, '0') }}:{{ String(seconds).padStart(2, '0') }}
+              </span>
             </div>
           </template>
         </CountdownTimer>
@@ -83,7 +87,7 @@
       </section>
 
       <section class="submit-section">
-         <button class="btn btn-danger w-100 py-3" @click="showConfirmModal = true">
+         <button class=" btn btn-primary w-100 py-3" @click="showConfirmModal = true">
            Submit Assessment
          </button>
       </section>
@@ -103,7 +107,6 @@
 </template>
 
 <script setup>
-// ... (Script Logic identical to previous correct version, imports kept) ...
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useStudentQuizStore } from '@/stores/StudentQuizStore';
 import AppModal from '@/components/reusable/AppModal.vue'; 
@@ -116,21 +119,60 @@ const emit = defineEmits(['submit', 'close']);
 const showConfirmModal = ref(false);
 const timerTarget = ref(null);
 
-onMounted(() => { if (store.timeRemaining > 0) timerTarget.value = Date.now() + (store.timeRemaining * 1000); });
-watch(() => store.status, (newVal) => { if (newVal === 'submitted') { /* wait for user */ } });
-onUnmounted(async () => { if (store.status === 'running') { await store.completeQuiz('Navigated Away'); emit('submit'); } store.stopTimers(); });
+onMounted(() => { 
+    if (store.timeRemaining > 0) {
+        timerTarget.value = Date.now() + (store.timeRemaining * 1000); 
+    }
+});
+
+watch(() => store.status, (newVal) => { 
+    if (newVal === 'submitted') { /* wait for user */ } 
+});
+
+// --- MODIFIED FOR DEVELOPMENT: DISABLE AUTO-SUBMIT ON NAVIGATION ---
+onUnmounted(async () => { 
+    // DEV MODE: Commented out to prevent auto-submit when refreshing/leaving
+     if (store.status === 'running') { 
+        await store.completeQuiz('Navigated Away'); 
+        emit('submit'); 
+    } 
+    
+    
+    // You still want to stop timers to prevent memory leaks
+    store.stopTimers(); 
+});
 
 const getOptionValue = (opt) => (typeof opt === 'object' && opt !== null) ? (opt.value || opt.text) : opt;
 const getOptionLabel = (opt) => (typeof opt === 'object' && opt !== null) ? (opt.text || opt.value) : opt;
 const isSelected = (opt) => getOptionValue(opt) == store.answers[store.currentQuestion.id];
 const selectOption = (opt) => store.saveAnswer(store.currentQuestion.id, getOptionValue(opt));
 
-const answeredStatusArray = computed(() => { if (!store.questions.length) return []; return store.questions.map(q => { const ans = store.answers[q.id]; return ans !== null && ans !== undefined && ans !== ''; }); });
+const answeredStatusArray = computed(() => { 
+    if (!store.questions.length) return []; 
+    return store.questions.map(q => { 
+        const ans = store.answers[q.id]; 
+        return ans !== null && ans !== undefined && ans !== ''; 
+    }); 
+});
 const answeredCount = computed(() => answeredStatusArray.value.filter(Boolean).length);
-const saveStatusClass = computed(() => { if (store.saveStatus === 'Saving...') return 'text-warning'; if (store.saveStatus === 'Saved') return 'text-success'; return 'text-danger'; });
+const saveStatusClass = computed(() => { 
+    if (store.saveStatus === 'Saving...') return 'text-warning'; 
+    if (store.saveStatus === 'Saved') return 'text-success'; 
+    return 'text-danger'; 
+});
 
-const handleUserSubmit = () => { showConfirmModal.value = false; store.completeQuiz('User Action'); };
-const handleTimerFinished = () => { store.completeQuiz('Time Expired'); };
+const handleUserSubmit = () => { 
+    showConfirmModal.value = false; 
+    store.completeQuiz('User Action'); 
+};
+
+// --- MODIFIED FOR DEVELOPMENT: DISABLE AUTO-SUBMIT ON TIMER END ---
+const handleTimerFinished = () => { 
+    // DEV MODE: Commented out so you can keep working even if time "expires"
+     store.completeQuiz('Time Expired'); 
+    console.log("Timer finished, but auto-submit is disabled for dev.");
+};
+
 const confirmAndLeave = () => { emit('submit'); };
 </script>
 
@@ -138,22 +180,24 @@ const confirmAndLeave = () => { emit('submit'); };
 .quiz-wrapper { display: flex; flex-direction: column; height: 100vh; background-color: var(--light-color); overflow: hidden; }
 
 /* Header */
-.quiz-header { height: 64px; flex-shrink: 0; background: white; border-bottom: 1px solid var(--gray-light); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--spacing-lg); z-index: 20; }
-.header-left, .header-right { display: flex; align-items: center; gap: var(--spacing-md); }
+.quiz-header { height: 30px; flex-shrink: 0; background: white; border-bottom: 1px solid var(--gray-light); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--spacing-lg); z-index: 20; }
+.header-left, .header-right { display: flex; gap: var(--spacing-sm); }
+.save-status { color:var(--primary-color); }
 .quiz-title { font-size: var(--font-size-lg); font-weight: 700; color: var(--dark-color); margin: 0; }
 .status-badge { font-size: var(--font-size-xs); padding: 4px 10px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
 .bg-success-soft { background: var(--success-soft); } .text-success { color: var(--success-dark); }
 .bg-danger-soft { background: var(--danger-soft); } .text-danger { color: var(--danger-dark); }
 
-.timer-display { font-family: monospace; font-size: var(--font-size-lg); font-weight: 700; color: var(--dark-color); background: var(--light-color); padding: 6px 12px; border-radius: var(--border-radius-md); }
+.timer-display { font-size: var(--font-size-md); font-weight: 700; color: var(--dark-color); background: var(--light-color); padding: 2px; }
 .timer-display.urgent { color: var(--danger-color); background: var(--danger-soft); }
+.icon { font-size: 20px; width: 16px; height: 16px; opacity: 0.7; }
 
 /* Body */
-.quiz-body { flex: 1; overflow-y: auto; padding: var(--spacing-lg); display: flex; flex-direction: column; gap: var(--spacing-lg); align-items: center; }
-.question-section, .palette-section, .submit-section { width: 100%; max-width: 800px; }
+.quiz-body { flex: 1; overflow-y: auto; padding: 2px; display: flex; flex-direction: column; gap: var(--spacing-sm); align-items: center; }
+.question-section, .palette-section, .submit-section { width: 100%; max-width: 850px; }
 
 /* Question Card */
-.question-card { padding: var(--spacing-xl); }
+.question-card { padding: var(--spacing-md); }
 .q-meta { display: flex; justify-content: space-between; align-items: center; }
 .badge-primary-soft { background: var(--primary-soft); color: var(--primary-color); padding: 4px 10px; border-radius: var(--border-radius-sm); font-weight: 600; font-size: var(--font-size-sm); }
 .q-text { font-size: var(--font-size-xl); color: var(--dark-color); line-height: 1.5; font-weight: 600; }
@@ -187,6 +231,5 @@ const confirmAndLeave = () => { emit('submit'); };
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
 .dot.current { background: var(--primary-color); }
 .dot.answered { background: var(--primary-soft); border: 1px solid var(--primary-color); }
-
 .nav-controls { display: flex; justify-content: space-between; }
 </style>

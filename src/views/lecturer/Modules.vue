@@ -71,16 +71,20 @@
     <div v-if="loading" class="loading-skeleton">
       <div v-for="n in 2" :key="n" class="skeleton-group">
         <div class="skeleton-header">
-          <div class="skeleton-title skeleton-shimmer"></div>
-          <div class="skeleton-badge skeleton-shimmer"></div>
+           <AppSkeleton width="200px" height="28px" class="mb-2" />
+           <AppSkeleton width="100px" height="20px" borderRadius="12px" />
         </div>
         <div class="modules-grid skeleton-grid">
           <div v-for="k in 3" :key="k" class="skeleton-card">
-            <div class="skeleton-card-header skeleton-shimmer"></div>
             <div class="skeleton-card-content">
-              <div class="skeleton-line skeleton-shimmer" style="width: 70%"></div>
-              <div class="skeleton-line skeleton-shimmer" style="width: 40%"></div>
-              <div class="skeleton-line skeleton-shimmer mt-4" style="width: 100%; height: 40px"></div>
+               <AppSkeleton width="100%" height="4px" class="mb-3" />
+               <div class="flex justify-between mb-3">
+                  <AppSkeleton width="60px" height="20px" borderRadius="4px" />
+                  <AppSkeleton width="50px" height="20px" borderRadius="12px" />
+               </div>
+               <AppSkeleton width="80%" height="24px" class="mb-3" />
+               <AppSkeleton width="60%" height="16px" class="mb-4" />
+               <AppSkeleton width="100%" height="40px" borderRadius="8px" class="mt-auto" />
             </div>
           </div>
         </div>
@@ -227,6 +231,7 @@
         <div v-if="activeTab === 'quizzes'" class="modal-tab-content">
           <div v-if="moduleQuizzes.length === 0" class="empty-state small">
              <p>No quizzes created yet.</p>
+             <button class="btn btn-primary mt-2" @click="createQuiz">Create First Quiz</button>
           </div>
           <AppTable v-else :columns="quizColumns" :data="moduleQuizzes" hover>
             <template #title="{ item }">
@@ -246,7 +251,7 @@
                   <button class="btn-icon" title="Results" @click="viewQuizResults(item)">
                     <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                   </button>
-                  <button class="btn-icon danger" title="Delete" @click="initiateDelete(item, 'quiz')">
+                  <button class="btn-icon danger" title="Delete" @click="initiateDelete(item)">
                     <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                   </button>
                </div>
@@ -276,7 +281,12 @@
           <p>Are you sure you want to delete <strong>{{ itemToDelete?.title }}</strong>?</p>
           <div class="flex justify-center gap-3 mt-4">
              <button class="btn btn-outline" @click="showDeleteModal = false">Cancel</button>
-             <button class="btn btn-danger" @click="executeDelete">Delete</button>
+             <button class="btn btn-danger" @click="executeDelete" :disabled="deleteLoading">
+                <span v-if="deleteLoading" class="btn-loading-content">
+                  <AppSpinner size="sm" color="light" /> Deleting...
+                </span>
+                <span v-else>Delete</span>
+             </button>
           </div>
        </div>
     </AppModal>
@@ -292,16 +302,19 @@ import { ref, onMounted, computed, watch } from 'vue'
 import AppButton from '../../components/reusable/AppButton.vue'
 import AppModal from '../../components/reusable/AppModal.vue'
 import AppTable from '../../components/reusable/AppTable.vue'
+import AppSkeleton from '../../components/reusable/AppSkeleton.vue'
+import AppSpinner from '../../components/reusable/AppSpinner.vue'
 import QuizQuestionsModal from '../../components/lecturer/QuizQuestionsModal.vue'
 import QuizResultsModal from '../../components/lecturer/QuizResultsModal.vue'
 import api from '@/api/api'
 
 export default {
   name: 'LecturerModules',
-  components: { AppButton, AppModal, AppTable, QuizQuestionsModal, QuizResultsModal },
+  components: { AppButton, AppModal, AppTable, AppSkeleton, AppSpinner, QuizQuestionsModal, QuizResultsModal },
   setup() {
     const moduleData = ref([]) 
     const loading = ref(true)
+    const deleteLoading = ref(false)
     const groupBySession = ref(true)
     const searchQuery = ref('')
     const selectedSemester = ref('all')
@@ -325,7 +338,6 @@ export default {
       { key: 'title', label: 'Quiz', width: '45%' },
       { key: 'duration_minutes', label: 'Duration', width: '15%' },
       { key: 'status', label: 'Status', width: '15%' },
-      { key: 'actions', label: '', width: '25%', align: 'right' }
     ]
 
     const hasData = computed(() => {
@@ -367,6 +379,11 @@ export default {
        await fetchModuleQuizzes(module.id)
     }
 
+    const createQuiz = () => {
+       // Navigate or open create modal
+       console.log("Create quiz for", selectedModule.value.id)
+    }
+
     const viewQuizQuestions = (quiz) => {
        selectedQuiz.value = quiz
        showQuizQuestionsModal.value = true
@@ -389,11 +406,15 @@ export default {
 
     const executeDelete = async () => {
        if(!itemToDelete.value) return
+       deleteLoading.value = true
        try {
           await api.delete(`/lecturer/quizzes/${itemToDelete.value.id}`)
           moduleQuizzes.value = moduleQuizzes.value.filter(q => q.id !== itemToDelete.value.id)
        } catch(e) { console.error(e) }
-       finally { showDeleteModal.value = false }
+       finally { 
+         deleteLoading.value = false
+         showDeleteModal.value = false 
+       }
     }
 
     const resetFilters = () => {
@@ -417,11 +438,11 @@ export default {
     onMounted(fetchAssignedModules)
 
     return {
-       moduleData, loading, hasData, totalModules,
+       moduleData, loading, deleteLoading, hasData, totalModules,
        searchQuery, selectedSemester, groupBySession,
        selectedModule, activeTab, tabs, quizColumns, moduleQuizzes,
        selectedQuiz, showQuizQuestionsModal, showQuizResultsModal, showDeleteModal, itemToDelete,
-       openModuleModal, viewQuizQuestions, viewQuizResults, initiateDelete, executeDelete,
+       openModuleModal, createQuiz, viewQuizQuestions, viewQuizResults, initiateDelete, executeDelete,
        resetFilters, getSemesterGradient
     }
   }
@@ -517,13 +538,22 @@ input:checked + .toggle-slider:before { transform: translateX(24px); }
 .btn-icon:hover { color: var(--primary-color); transform: scale(1.1); }
 .btn-icon.danger:hover { color: var(--danger-color); }
 
+.btn { padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; }
+.btn.btn-primary { background: var(--primary-color); color: white; }
+.btn.btn-danger { background: var(--danger-color); color: white; }
+.btn.btn-outline { border: 1px solid #ddd; background: white; color: #333; }
+
+.btn-loading-content { display: flex; align-items: center; gap: 8px; }
+
 /* Skeleton */
-.skeleton-shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
-.skeleton-card { height: 300px; background: white; border-radius: 12px; border: 1px solid var(--gray-light); overflow: hidden; }
-.skeleton-card-header { height: 4px; width: 100%; }
-.skeleton-card-content { padding: 1.5rem; }
-.skeleton-line { height: 12px; border-radius: 6px; margin-bottom: 1rem; }
-@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skeleton-card { height: 320px; background: white; border-radius: 12px; border: 1px solid var(--gray-light); overflow: hidden; }
+.skeleton-card-content { padding: 1.5rem; height: 100%; display: flex; flex-direction: column; }
+.skeleton-group { margin-bottom: 2rem; }
+.skeleton-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 0.75rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mt-auto { margin-top: auto; }
 
 /* Empty State */
 .empty-state { text-align: center; padding: 4rem 2rem; color: var(--gray-color); }
