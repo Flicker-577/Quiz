@@ -263,7 +263,7 @@ import AppButton from '../../components/reusable/AppButton.vue'
 import AppModal from '../../components/reusable/AppModal.vue'
 import AppSkeleton from '../../components/reusable/AppSkeleton.vue'
 import QuizAttempt from '../../components/student/QuizAttempt.vue'
-import { useStudentQuizStore } from '@/stores/studentQuizStore' // exact letters
+import { useStudentQuizStore } from '@/stores/studentQuizStore'
 import api from '@/api/api' 
 
 export default {
