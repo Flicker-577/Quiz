@@ -180,7 +180,7 @@
 <script setup>
 // ... (Logic remains identical to previous versions) ...
 import { ref, onMounted, computed } from 'vue';
-import { useStudentQuizStore } from '@/stores/StudentQuizStore';
+import { useStudentQuizStore } from '@/stores/studentQuizStore';
 import api from '@/api/api';
 import QuizCard from '../../components/student/QuizCard.vue';
 import QuizAttempt from '../../components/student/QuizAttempt.vue';
