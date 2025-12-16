@@ -36,7 +36,7 @@
 </template>
 
 <script setup>
-import { useStudentQuizStore } from '@/stores/StudentQuizStore';
+import { useStudentQuizStore } from '@/stores/studentQuizStore';
 const props = defineProps({ visible: Boolean });
 defineEmits(['confirm']);
 const store = useStudentQuizStore();

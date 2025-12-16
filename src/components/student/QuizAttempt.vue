@@ -105,7 +105,7 @@
 <script setup>
 // ... (Script Logic identical to previous correct version, imports kept) ...
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import { useStudentQuizStore } from '@/stores/StudentQuizStore';
+import { useStudentQuizStore } from '@/stores/studentQuizStore';
 import AppModal from '@/components/reusable/AppModal.vue'; 
 import QuestionPalette from './QuestionPalette.vue';
 import CountdownTimer from './CountdownTimer.vue';
